@@ -1,14 +1,8 @@
 oak9.ci.jenkins
 
-[![Build Status](https://ci.jenkins.io/job/Plugins/job/oak9-plugin/job/master/badge/icon)](https://ci.jenkins.io/job/Plugins/job/oak9-plugin/job/master/)
-[![Contributors](https://img.shields.io/github/contributors/jenkinsci/oak9-plugin.svg)](https://github.com/jenkinsci/oak9-plugin/graphs/contributors)
-[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/oak9.svg)](https://plugins.jenkins.io/oak9)
-[![GitHub release](https://img.shields.io/github/release/jenkinsci/oak9-plugin.svg?label=changelog)](https://github.com/jenkinsci/oak9-plugin/releases/latest)
-[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/oak9.svg?color=blue)](https://plugins.jenkins.io/oak9)
-
 ## Introduction
 
-TODO Describe what your plugin does here
+oak9 Jenkins plugin
 
 ## Getting started
 
