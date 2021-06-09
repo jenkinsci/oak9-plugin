@@ -49,7 +49,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     @Override
     public void perform(
                         @NonNull Run<?, ?> run,
-                        @NonNull FilePath filePath,
+                        @NonNull FilePath workspace,
                         @NonNull Launcher launcher,
                         @NonNull TaskListener taskListener
     ) throws InterruptedException, IOException {
@@ -65,6 +65,20 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                 throws IOException, ServletException {
             if (value.length() == 0)
                 return FormValidation.error(Messages.Oak9Builder_DescriptorImpl_errors_missingOrgId());
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckProjectId(@QueryParameter String value)
+                throws IOException, ServletException {
+            if (value.length() == 0)
+                return FormValidation.error(Messages.Oak9Builder_DescriptorImpl_errors_missingProjectId());
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckKey(@QueryParameter String value)
+                throws IOException, ServletException {
+            if (value.length() == 0)
+                return FormValidation.error(Messages.Oak9Builder_DescriptorImpl_errors_missingKey());
             return FormValidation.ok();
         }
 
