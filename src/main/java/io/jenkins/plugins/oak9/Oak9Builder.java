@@ -28,6 +28,7 @@ import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
@@ -61,14 +62,15 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     ) throws InterruptedException, IOException {
 
         // Find list of IaC files
-        List<FilePath> workspaceItems = workspace.list(new IacExtensionFilter());
-        if (workspaceItems.size() == 0) {
+        //List<FilePath> workspaceItems = workspace.list(new IacExtensionFilter());
+        Collection<File> IacFiles = FileScanner.scanForIacFiles(workspace.absolutize(), new IacExtensionFilter());
+        if (IacFiles.size() == 0) {
             throw new IOException("No IaC files could be found!");
         }
 
         // Zip Files
         taskListener.getLogger().println("Packaging IaC files for oak9...\n");
-        FileArchiver archiver = new FileArchiver(workspace.absolutize(), workspaceItems, "oak9.zip");
+        FileArchiver archiver = new FileArchiver(workspace.absolutize(), IacFiles, "oak9.zip");
         archiver.zipFiles();
 
         // Make request to oak9 API to push zip file

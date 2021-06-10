@@ -1,5 +1,8 @@
 package io.jenkins.plugins.oak9.utils;
 
+import org.apache.commons.io.filefilter.AbstractFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.Serializable;
@@ -7,8 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class IacExtensionFilter
-        implements FileFilter, Serializable
-{
+        implements FileFilter, Serializable, IOFileFilter {
     private final List<String> allowedExtensionPatterns = Arrays.asList(".*\\.tf.*", ".*\\.json", ".*\\.yaml");
 
     @Override
@@ -25,5 +27,11 @@ public final class IacExtensionFilter
         }
 
         return false;
+    }
+
+    @Override
+    public boolean accept(File file, String s) {
+        File complete_file = new File(file.getName() + File.separator + s);
+        return accept(complete_file);
     }
 }

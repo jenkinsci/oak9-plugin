@@ -1,48 +1,39 @@
 package io.jenkins.plugins.oak9.utils;
 
+import groovy.json.internal.IO;
 import hudson.FilePath;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.DirectoryFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FileScanner {
 
-    private final List<String> allowedExtensionPatterns;
-    private final FilePath basePath;
+    public static Collection<File> scanForIacFiles(FilePath path, FileFilter filter) throws IOException, InterruptedException {
 
-    public FileScanner(List<String> allowedExtensionPatterns, FilePath basePath) {
-        this.allowedExtensionPatterns = allowedExtensionPatterns;
-        this.basePath = basePath;
-    }
+        // generate a Java path from the Jenkins FilePath object
+        File workspace_path = new File(path.toString());
 
-    public List<Path> scanForIacFiles(Path path) throws IOException {
-
-        if (!Files.exists(path)) {
+        if (!workspace_path.exists()) {
             throw new IOException("The specified path does not exist.");
         }
 
-        if (!Files.isDirectory(path)) {
+        if (!workspace_path.isDirectory()) {
             throw new IllegalArgumentException("Path must be a directory!");
         }
-
-        List<Path> result;
-        try (Stream<Path> pathStream = Files.find(path,
-                Integer.MAX_VALUE,
-                (p, basicFileAttributes) -> {
-                    for (String pattern : this.allowedExtensionPatterns) {
-                        if (p.getFileName().toString().toLowerCase().matches(pattern)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                })) {
-            result = pathStream.collect(Collectors.toList());
-        }
-        return result;
+        String[] extensions = {"tf", "tfvars", "tfstate", "json", "yaml"};
+        Collection files = FileUtils.listFiles(workspace_path, extensions , true);
+        return files;
     }
 }
