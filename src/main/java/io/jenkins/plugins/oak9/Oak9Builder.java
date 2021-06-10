@@ -13,23 +13,25 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.util.ListBoxModel;
 import hudson.security.ACL;
 import io.jenkins.plugins.oak9.Messages;
+import io.jenkins.plugins.oak9.utils.FileArchiver;
+import io.jenkins.plugins.oak9.utils.FileScanner;
+import io.jenkins.plugins.oak9.utils.IacExtensionFilter;
 import jenkins.model.Jenkins;
-import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
-import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 import static com.cloudbees.plugins.credentials.domains.URIRequirementBuilder.fromUri;
 import javax.servlet.ServletException;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.zip.ZipOutputStream;
+
 import jenkins.tasks.SimpleBuildStep;
-import org.jenkinsci.Symbol;
-import org.kohsuke.stapler.DataBoundSetter;
 
 public class Oak9Builder extends Builder implements SimpleBuildStep {
 
@@ -46,6 +48,10 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         this.maxSeverity = maxSeverity;
     }
 
+    public FilePath createZipFile(FilePath workspace) {
+        return workspace;
+    }
+
     @Override
     public void perform(
                         @NonNull Run<?, ?> run,
@@ -54,7 +60,27 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                         @NonNull TaskListener taskListener
     ) throws InterruptedException, IOException {
 
-        taskListener.getLogger().println("oak9 Step ran");
+        // Find list of IaC files
+        List<FilePath> workspaceItems = workspace.list(new IacExtensionFilter());
+        if (workspaceItems.size() == 0) {
+            throw new IOException("No IaC files could be found!");
+        }
+
+        // Zip Files
+        taskListener.getLogger().println("Packaging IaC files for oak9...\n");
+        FileArchiver archiver = new FileArchiver(workspace.absolutize(), workspaceItems, "oak9.zip");
+        archiver.zipFiles();
+
+        // Make request to oak9 API to push zip file
+        taskListener.getLogger().print("Sending IaC files to oak9...\n");
+
+        // Check status endpoint
+        taskListener.getLogger().print("Waiting for oak9 analysis...\n");
+
+        // Analyze Results
+        taskListener.getLogger().print("Analyzing oak9 scan results...\n");
+
+        taskListener.getLogger().println("oak9 Runner Complete\n");
 
     }
 
