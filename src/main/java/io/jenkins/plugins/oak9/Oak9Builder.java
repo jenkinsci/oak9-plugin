@@ -71,7 +71,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         // Zip Files
         taskListener.getLogger().println("Packaging IaC files for oak9...\n");
         FileArchiver archiver = new FileArchiver(workspace.absolutize(), IacFiles, "oak9.zip");
-        archiver.zipFiles();
+        archiver.zipFiles(workspace.absolutize().toString());
 
         // Make request to oak9 API to push zip file
         taskListener.getLogger().print("Sending IaC files to oak9...\n");

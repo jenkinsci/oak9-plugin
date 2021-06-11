@@ -21,12 +21,15 @@ public class FileArchiver {
     }
 
     public void zipFiles() throws IOException {
+        zipFiles("");
+    }
+
+    public void zipFiles(String base_path) throws IOException {
         FileOutputStream fos = new FileOutputStream(this.basePath + File.separator + this.outputFileName);
         ZipOutputStream zipOut = new ZipOutputStream(fos);
         for (File file : this.filesList) {
-            //File fileToZip = new File(this.basePath + File.separator +  file.getName());
             FileInputStream fis = new FileInputStream(file);
-            ZipEntry zipEntry = new ZipEntry(file.toString());
+            ZipEntry zipEntry = new ZipEntry(file.toString().replace(base_path, ""));
             zipOut.putNextEntry(zipEntry);
 
             byte[] bytes = new byte[1024];
