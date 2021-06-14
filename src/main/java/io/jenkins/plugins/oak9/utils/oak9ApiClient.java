@@ -1,12 +1,12 @@
 package io.jenkins.plugins.oak9.utils;
 
-import hudson.FilePath;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jenkins.plugins.oak9.model.ApiResponse;
+import io.jenkins.plugins.oak9.model.ValidationResult;
 import okhttp3.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.rmi.server.RemoteRef;
 
 public class oak9ApiClient<Int> {
 
@@ -16,6 +16,7 @@ public class oak9ApiClient<Int> {
     private final String projectId;
     private final OkHttpClient client;
     private final int maxAttempts = 30;
+    private static final MediaType MEDIA_TYPE_ZIP = MediaType.parse("application/zip");
 
     public oak9ApiClient(String baseUrl, String key, String orgId, String projectId) {
         this.baseUrl = baseUrl;
@@ -25,42 +26,45 @@ public class oak9ApiClient<Int> {
         this.client = new OkHttpClient();
     }
 
-    public void postFileValidation(FilePath file) throws IOException, InterruptedException {
-        this.postFileValidation(file, 0);
+    public ValidationResult postFileValidation(File file) throws IOException, InterruptedException {
+        return this.postFileValidation(file, 0);
     }
 
-    public void postFileValidation(FilePath file, int attempts) throws IOException, InterruptedException {
+    public ValidationResult postFileValidation(File file, int attempts) throws IOException, InterruptedException {
+
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
-                .addPart(
-                        Headers.of("Content-Disposition", "form-data; name=\"files\""),
-                        RequestBody.create(
-                                MediaType.parse(file.getName()),
-                                new File(file.getName())))
+                .addFormDataPart("files", file.getName(),
+                        RequestBody.create(file, MEDIA_TYPE_ZIP))
                 .build();
 
+        String credentials = Credentials.basic(this.orgId, this.key);
         Request request = new Request.Builder()
-                .url(this.baseUrl + "/queue/iac?files")
+                .header("Authorization", credentials)
+                .url(this.baseUrl + "/" + this.orgId + "/validations/" + this.projectId + "/queue?iac=files")
                 .post(requestBody)
                 .build();
 
-        Call call = client.newCall(request);
-        Response response = call.execute();
-        switch (response.code()) {
-            case 200:
-                return;
-            case 503:
-                if (attempts > this.maxAttempts) {
-                    throw new InterruptedException("Communication with oak9 API has timed out.");
-                }
+        try (Response response = client.newCall(request).execute()) {
+            switch (response.code()) {
+                case 200:
+                    ObjectMapper mapper = new ObjectMapper();
+                    ApiResponse apiResponse = mapper.readValue(response.body().charStream(), ApiResponse.class);
+                    ValidationResult validationResult = apiResponse.getResult();
+                    return validationResult;
+                case 503:
+                    if (attempts > this.maxAttempts) {
+                        throw new InterruptedException("Communication with oak9 API has timed out.");
+                    }
 
-                attempts++;
-                Thread.sleep(1000);
-                postFileValidation(file , attempts);
-                break;
-            default:
-                throw new InterruptedException("Communication with oak9 API unsuccessful.");
+                    attempts++;
+                    Thread.sleep(1000);
+                    postFileValidation(file , attempts);
+                    break;
+                default:
+                    throw new InterruptedException("Communication with oak9 API unsuccessful.");
+            }
         }
-
+        throw new InterruptedException("Unable to complete API request.");
     }
 }

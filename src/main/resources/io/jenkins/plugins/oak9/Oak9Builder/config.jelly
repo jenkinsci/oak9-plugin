@@ -12,10 +12,10 @@
     <f:entry name="maxSeverity" title="${%MaxSeverity}" field="maxSeverity">
         <select name="maxSeverity">
             <option value="severityNone">Severity</option>
-            <option value="severityCritical">Critical</option>
-            <option value="severityMedium">Medium</option>
-            <option value="severityWarning">Warning</option>
-            <option value="severityNone">None</option>
+            <option value="severityCritical" selected="${instance.maxSeverity.equals('severityCritical')? 'true':null}">Critical</option>
+            <option value="severityMedium" selected="${instance.maxSeverity.equals('severityMedium')? 'true':null}">Medium</option>
+            <option value="severityWarning" selected="${instance.maxSeverity.equals('severityWarning')? 'true':null}">Warning</option>
+            <option value="severityNone" selected="${instance.maxSeverity.equals('severityNone')? 'true':null}">None</option>
         </select>
     </f:entry>
 </j:jelly>

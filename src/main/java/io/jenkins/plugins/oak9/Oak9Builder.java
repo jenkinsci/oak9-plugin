@@ -1,5 +1,6 @@
 package io.jenkins.plugins.oak9;
 
+import com.cloudbees.plugins.credentials.CredentialsProvider;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Launcher;
 import hudson.Extension;
@@ -16,7 +17,9 @@ import io.jenkins.plugins.oak9.Messages;
 import io.jenkins.plugins.oak9.utils.FileArchiver;
 import io.jenkins.plugins.oak9.utils.FileScanner;
 import io.jenkins.plugins.oak9.utils.IacExtensionFilter;
+import io.jenkins.plugins.oak9.utils.oak9ApiClient;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
@@ -25,6 +28,7 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import static com.cloudbees.plugins.credentials.domains.URIRequirementBuilder.fromUri;
 import javax.servlet.ServletException;
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -38,15 +42,31 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
 
     private final String orgId;
     private final String projectId;
-    private final String key;
+    private final String credentialsId;
     private final String maxSeverity;
 
     @DataBoundConstructor
-    public Oak9Builder(String orgId, String projectId, String key, String maxSeverity) {
+    public Oak9Builder(String orgId, String projectId, String credentialsId, String maxSeverity) {
         this.orgId = orgId;
         this.projectId = projectId;
-        this.key = key;
+        this.credentialsId = credentialsId;
         this.maxSeverity = maxSeverity;
+    }
+
+    public String getOrgId(){
+        return this.orgId;
+    }
+
+    public String getProjectId() {
+        return this.projectId;
+    }
+
+    public String getCredentialsId() {
+        return this.credentialsId;
+    }
+
+    public String getMaxSeverity() {
+        return this.maxSeverity;
     }
 
     public FilePath createZipFile(FilePath workspace) {
@@ -73,8 +93,16 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         FileArchiver archiver = new FileArchiver(workspace.absolutize(), IacFiles, "oak9.zip");
         archiver.zipFiles(workspace.absolutize().toString());
 
+        File zipFile = new File("oak9.zip");
+        if (!zipFile.exists()) {
+            throw new InterruptedException("Unable to generate zip file. Aborting.");
+        }
+
         // Make request to oak9 API to push zip file
         taskListener.getLogger().print("Sending IaC files to oak9...\n");
+        StringCredentials key = getCredentials(run, this.getCredentialsId());
+        oak9ApiClient client = new oak9ApiClient("https://devconsole-api.oak9.cloud/integrations/", key.toString(), this.orgId, this.projectId);
+        client.postFileValidation(zipFile);
 
         // Check status endpoint
         taskListener.getLogger().print("Waiting for oak9 analysis...\n");
@@ -84,6 +112,10 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
 
         taskListener.getLogger().println("oak9 Runner Complete\n");
 
+    }
+
+    public static StringCredentials getCredentials(Run<?, ?> run, String credentialsId) {
+        return CredentialsProvider.findCredentialById(credentialsId, StringCredentials.class, run);
     }
 
     @Extension
@@ -103,7 +135,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
             return FormValidation.ok();
         }
 
-        public FormValidation doCheckKey(@QueryParameter String value)
+        public FormValidation doCheckCredentialsId(@QueryParameter String value)
                 throws IOException, ServletException {
             if (value.length() == 0)
                 return FormValidation.error(Messages.Oak9Builder_DescriptorImpl_errors_missingKey());
