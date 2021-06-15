@@ -1,9 +1,59 @@
 package io.jenkins.plugins.oak9.model;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import javax.annotation.Generated;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({
+        "requestId",
+        "status",
+        "summary",
+        "errorMessage",
+        "result",
+        "resultsUrl"
+})
+@Generated("jsonschema2pojo")
 public class ApiResponse {
-    public ApiResponse(String requestId, String status, String summary, String errorMessage, ValidationResult result, String resultsUrl) {
+
+    @JsonProperty("requestId")
+    private String requestId;
+    @JsonProperty("status")
+    private String status;
+    @JsonProperty("summary")
+    private Object summary;
+    @JsonProperty("errorMessage")
+    private Object errorMessage;
+    @JsonProperty("result")
+    private ValidationResult result;
+    @JsonProperty("resultsUrl")
+    private Object resultsUrl;
+    @JsonIgnore
+    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
+
+    /**
+     * No args constructor for use in serialization
+     *
+     */
+    public ApiResponse() {
+    }
+
+    /**
+     *
+     * @param summary
+     * @param result
+     * @param resultsUrl
+     * @param requestId
+     * @param errorMessage
+     * @param status
+     */
+    public ApiResponse(String requestId, String status, Object summary, Object errorMessage, ValidationResult result, Object resultsUrl) {
         this.requestId = requestId;
         this.status = status;
         this.summary = summary;
@@ -12,63 +62,74 @@ public class ApiResponse {
         this.resultsUrl = resultsUrl;
     }
 
-    private String requestId;
-    private String status;
-    private String summary;
-    private String errorMessage;
-    private ValidationResult result;
-
+    @JsonProperty("requestId")
     public String getRequestId() {
         return requestId;
     }
 
+    @JsonProperty("requestId")
     public void setRequestId(String requestId) {
         this.requestId = requestId;
     }
 
+    @JsonProperty("status")
     public String getStatus() {
         return status;
     }
 
+    @JsonProperty("status")
     public void setStatus(String status) {
         this.status = status;
     }
 
-    public String getSummary() {
+    @JsonProperty("summary")
+    public Object getSummary() {
         return summary;
     }
 
-    public void setSummary(String summary) {
+    @JsonProperty("summary")
+    public void setSummary(Object summary) {
         this.summary = summary;
     }
 
-    public String getErrorMessage() {
+    @JsonProperty("errorMessage")
+    public Object getErrorMessage() {
         return errorMessage;
     }
 
-    public void setErrorMessage(String errorMessage) {
+    @JsonProperty("errorMessage")
+    public void setErrorMessage(Object errorMessage) {
         this.errorMessage = errorMessage;
     }
 
+    @JsonProperty("result")
     public ValidationResult getResult() {
         return result;
     }
 
+    @JsonProperty("result")
     public void setResult(ValidationResult result) {
         this.result = result;
     }
 
-    public String getResultsUrl() {
+    @JsonProperty("resultsUrl")
+    public Object getResultsUrl() {
         return resultsUrl;
     }
 
-    public void setResultsUrl(String resultsUrl) {
+    @JsonProperty("resultsUrl")
+    public void setResultsUrl(Object resultsUrl) {
         this.resultsUrl = resultsUrl;
     }
 
-    private String resultsUrl;
+    @JsonAnyGetter
+    public Map<String, Object> getAdditionalProperties() {
+        return this.additionalProperties;
+    }
 
-
-
+    @JsonAnySetter
+    public void setAdditionalProperty(String name, Object value) {
+        this.additionalProperties.put(name, value);
+    }
 
 }

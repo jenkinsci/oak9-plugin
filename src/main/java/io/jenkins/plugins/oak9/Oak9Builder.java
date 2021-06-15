@@ -1,7 +1,10 @@
 package io.jenkins.plugins.oak9;
 
+import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.*;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.FilePath;
@@ -14,6 +17,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.util.ListBoxModel;
 import hudson.security.ACL;
 import io.jenkins.plugins.oak9.Messages;
+import io.jenkins.plugins.oak9.model.ValidationResult;
 import io.jenkins.plugins.oak9.utils.FileArchiver;
 import io.jenkins.plugins.oak9.utils.FileScanner;
 import io.jenkins.plugins.oak9.utils.IacExtensionFilter;
@@ -23,8 +27,7 @@ import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+
 import static com.cloudbees.plugins.credentials.domains.URIRequirementBuilder.fromUri;
 import javax.servlet.ServletException;
 import java.io.*;
@@ -77,12 +80,11 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     public void perform(
                         @NonNull Run<?, ?> run,
                         @NonNull FilePath workspace,
+                        @NonNull EnvVars env,
                         @NonNull Launcher launcher,
                         @NonNull TaskListener taskListener
     ) throws InterruptedException, IOException {
-
         // Find list of IaC files
-        //List<FilePath> workspaceItems = workspace.list(new IacExtensionFilter());
         Collection<File> IacFiles = FileScanner.scanForIacFiles(workspace.absolutize(), new IacExtensionFilter());
         if (IacFiles.size() == 0) {
             throw new IOException("No IaC files could be found!");
@@ -100,12 +102,17 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
 
         // Make request to oak9 API to push zip file
         taskListener.getLogger().print("Sending IaC files to oak9...\n");
-        StringCredentials key = getCredentials(run, this.getCredentialsId());
-        oak9ApiClient client = new oak9ApiClient("https://devconsole-api.oak9.cloud/integrations/", key.toString(), this.orgId, this.projectId);
-        client.postFileValidation(zipFile);
+        StringCredentials oak9key = getCredentials(run, this.getCredentialsId());
+        oak9ApiClient client = new oak9ApiClient("https://devconsole-api.oak9.cloud/integrations", oak9key.getSecret().getPlainText(), this.orgId, this.projectId, taskListener);
+        ValidationResult result = client.postFileValidation(zipFile);
 
         // Check status endpoint
+        if (result.getStatus() != "Queued"){
+            throw new InterruptedException("Unexpected status: " + result.getStatus() + " from oak9 API");
+        }
+
         taskListener.getLogger().print("Waiting for oak9 analysis...\n");
+
 
         // Analyze Results
         taskListener.getLogger().print("Analyzing oak9 scan results...\n");

@@ -1,12 +1,14 @@
 package io.jenkins.plugins.oak9.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import hudson.model.TaskListener;
 import io.jenkins.plugins.oak9.model.ApiResponse;
 import io.jenkins.plugins.oak9.model.ValidationResult;
 import okhttp3.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 public class oak9ApiClient<Int> {
 
@@ -17,13 +19,18 @@ public class oak9ApiClient<Int> {
     private final OkHttpClient client;
     private final int maxAttempts = 30;
     private static final MediaType MEDIA_TYPE_ZIP = MediaType.parse("application/zip");
+    private final TaskListener jenkinsTaskListener;
 
-    public oak9ApiClient(String baseUrl, String key, String orgId, String projectId) {
+    public oak9ApiClient(String baseUrl, String key, String orgId, String projectId, TaskListener jenkinsTaskListener) {
         this.baseUrl = baseUrl;
         this.key = key;
         this.orgId = orgId;
         this.projectId = projectId;
-        this.client = new OkHttpClient();
+        this.jenkinsTaskListener = jenkinsTaskListener;
+        this.client = new OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .build();
     }
 
     public ValidationResult postFileValidation(File file) throws IOException, InterruptedException {
@@ -41,7 +48,7 @@ public class oak9ApiClient<Int> {
         String credentials = Credentials.basic(this.orgId, this.key);
         Request request = new Request.Builder()
                 .header("Authorization", credentials)
-                .url(this.baseUrl + "/" + this.orgId + "/validations/" + this.projectId + "/queue?iac=files")
+                .url(this.baseUrl + "/" + this.orgId + "/validations/proj-" + this.projectId + "/queue/iac?files")
                 .post(requestBody)
                 .build();
 
@@ -50,11 +57,10 @@ public class oak9ApiClient<Int> {
                 case 200:
                     ObjectMapper mapper = new ObjectMapper();
                     ApiResponse apiResponse = mapper.readValue(response.body().charStream(), ApiResponse.class);
-                    ValidationResult validationResult = apiResponse.getResult();
-                    return validationResult;
+                    return apiResponse.getResult();
                 case 503:
                     if (attempts > this.maxAttempts) {
-                        throw new InterruptedException("Communication with oak9 API has timed out.");
+                        throw new InterruptedException("Communication with oak9 API has timed out.\n");
                     }
 
                     attempts++;
@@ -62,7 +68,45 @@ public class oak9ApiClient<Int> {
                     postFileValidation(file , attempts);
                     break;
                 default:
-                    throw new InterruptedException("Communication with oak9 API unsuccessful.");
+                    jenkinsTaskListener.getLogger().println(response.code());
+                    throw new InterruptedException("Communication with oak9 API unsuccessful.\n");
+            }
+        }
+        throw new InterruptedException("Unable to complete API request.");
+    }
+
+    public ValidationResult pollStatus(ValidationResult result) throws IOException, InterruptedException {
+        return pollStatus(result, 0);
+    }
+
+    public ValidationResult pollStatus(ValidationResult result, int attempts) throws IOException, InterruptedException {
+        String credentials = Credentials.basic(this.orgId, this.key);
+        Request request = new Request.Builder()
+                .header("Authorization", credentials)
+                .url(this.baseUrl + "/" + this.orgId + "/validations/proj-" + this.projectId + "/" + result.getRequestId() + "/status")
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful()) {
+                ObjectMapper mapper = new ObjectMapper();
+                ApiResponse apiResponse = mapper.readValue(response.body().charStream(), ApiResponse.class);
+                switch (apiResponse.getStatus().toLowerCase()) {
+                    case "queued":
+                        return apiResponse.getResult();
+                    case "completed":
+                        if (attempts > this.maxAttempts) {
+                            throw new InterruptedException("Timed out waiting for oak9 scan to complete.\n");
+                        }
+
+                        attempts++;
+                        Thread.sleep(1000);
+                        pollStatus(result, attempts);
+                        break;
+                    default:
+                        throw new InterruptedException("Unexpected.\n");
+                }
+            } else {
+                throw new InterruptedException("API Request Unsuccessful");
             }
         }
         throw new InterruptedException("Unable to complete API request.");

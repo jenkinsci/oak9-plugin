@@ -13,8 +13,9 @@
         <select name="maxSeverity">
             <option value="severityNone">Severity</option>
             <option value="severityCritical" selected="${instance.maxSeverity.equals('severityCritical')? 'true':null}">Critical</option>
-            <option value="severityMedium" selected="${instance.maxSeverity.equals('severityMedium')? 'true':null}">Medium</option>
-            <option value="severityWarning" selected="${instance.maxSeverity.equals('severityWarning')? 'true':null}">Warning</option>
+            <option value="severityHigh" selected="${instance.maxSeverity.equals('severityHigh')? 'true':null}">High</option>
+            <option value="severityModerate" selected="${instance.maxSeverity.equals('severityModerate')? 'true':null}">Moderate</option>
+            <option value="serverityLow" selected="${instance.maxSeverity.equals('serverityLow')? 'true':null}">Low</option>
             <option value="severityNone" selected="${instance.maxSeverity.equals('severityNone')? 'true':null}">None</option>
         </select>
     </f:entry>
