@@ -46,7 +46,7 @@ public class ValidationResult {
     @JsonProperty("source")
     private Object source;
     @JsonProperty("designGaps")
-    private List<Object> designGaps = null;
+    private List<DesignGap> designGaps = null;
     @JsonProperty("resultRef")
     private ResultRef resultRef;
     @JsonProperty("results")
@@ -86,7 +86,7 @@ public class ValidationResult {
      * @param projectId
      * @param status
      */
-    public ValidationResult(String requestId, Object repositoryName, String timeStamp, List<Object> resources, String status, Object errorMessage, Object source, List<Object> designGaps, ResultRef resultRef, List<Object> results, String orgId, String projectId, String version, String entityType) {
+    public ValidationResult(String requestId, Object repositoryName, String timeStamp, List<Object> resources, String status, Object errorMessage, Object source, List<DesignGap> designGaps, ResultRef resultRef, List<Object> results, String orgId, String projectId, String version, String entityType) {
         this.requestId = requestId;
         this.repositoryName = repositoryName;
         this.timeStamp = timeStamp;
@@ -174,12 +174,12 @@ public class ValidationResult {
     }
 
     @JsonProperty("designGaps")
-    public List<Object> getDesignGaps() {
+    public List<DesignGap> getDesignGaps() {
         return designGaps;
     }
 
     @JsonProperty("designGaps")
-    public void setDesignGaps(List<Object> designGaps) {
+    public void setDesignGaps(List<DesignGap> designGaps) {
         this.designGaps = designGaps;
     }
 

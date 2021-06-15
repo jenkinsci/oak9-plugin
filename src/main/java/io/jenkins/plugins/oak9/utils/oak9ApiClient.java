@@ -27,10 +27,7 @@ public class oak9ApiClient<Int> {
         this.orgId = orgId;
         this.projectId = projectId;
         this.jenkinsTaskListener = jenkinsTaskListener;
-        this.client = new OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build();
+        this.client = new OkHttpClient();
     }
 
     public ValidationResult postFileValidation(File file) throws IOException, InterruptedException {
@@ -55,10 +52,12 @@ public class oak9ApiClient<Int> {
         try (Response response = client.newCall(request).execute()) {
             switch (response.code()) {
                 case 200:
+                    jenkinsTaskListener.getLogger().println("Got a 200");
                     ObjectMapper mapper = new ObjectMapper();
                     ApiResponse apiResponse = mapper.readValue(response.body().charStream(), ApiResponse.class);
                     return apiResponse.getResult();
                 case 503:
+                    jenkinsTaskListener.getLogger().println("Got a 503");
                     if (attempts > this.maxAttempts) {
                         throw new InterruptedException("Communication with oak9 API has timed out.\n");
                     }
@@ -68,7 +67,7 @@ public class oak9ApiClient<Int> {
                     postFileValidation(file , attempts);
                     break;
                 default:
-                    jenkinsTaskListener.getLogger().println(response.code());
+                    jenkinsTaskListener.getLogger().println("Got a " + response.code());
                     throw new InterruptedException("Communication with oak9 API unsuccessful.\n");
             }
         }
@@ -92,16 +91,17 @@ public class oak9ApiClient<Int> {
                 ApiResponse apiResponse = mapper.readValue(response.body().charStream(), ApiResponse.class);
                 switch (apiResponse.getStatus().toLowerCase()) {
                     case "queued":
-                        return apiResponse.getResult();
-                    case "completed":
                         if (attempts > this.maxAttempts) {
                             throw new InterruptedException("Timed out waiting for oak9 scan to complete.\n");
                         }
 
                         attempts++;
+                        jenkinsTaskListener.getLogger().println("Waiting for results (" + attempts + " seconds elapsed)");
                         Thread.sleep(1000);
                         pollStatus(result, attempts);
                         break;
+                    case "completed":
+                        return apiResponse.getResult();
                     default:
                         throw new InterruptedException("Unexpected.\n");
                 }

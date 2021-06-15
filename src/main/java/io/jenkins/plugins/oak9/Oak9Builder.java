@@ -17,7 +17,9 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.util.ListBoxModel;
 import hudson.security.ACL;
 import io.jenkins.plugins.oak9.Messages;
+import io.jenkins.plugins.oak9.model.DesignGap;
 import io.jenkins.plugins.oak9.model.ValidationResult;
+import io.jenkins.plugins.oak9.model.Violation;
 import io.jenkins.plugins.oak9.utils.FileArchiver;
 import io.jenkins.plugins.oak9.utils.FileScanner;
 import io.jenkins.plugins.oak9.utils.IacExtensionFilter;
@@ -104,18 +106,25 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         taskListener.getLogger().print("Sending IaC files to oak9...\n");
         StringCredentials oak9key = getCredentials(run, this.getCredentialsId());
         oak9ApiClient client = new oak9ApiClient("https://devconsole-api.oak9.cloud/integrations", oak9key.getSecret().getPlainText(), this.orgId, this.projectId, taskListener);
-        ValidationResult result = client.postFileValidation(zipFile);
+        ValidationResult postFileResult = client.postFileValidation(zipFile);
 
         // Check status endpoint
-        if (result.getStatus() != "Queued"){
-            throw new InterruptedException("Unexpected status: " + result.getStatus() + " from oak9 API");
+        if (!postFileResult.getStatus().toLowerCase().equals("queued") && !postFileResult.getStatus().toLowerCase().equals("completed")){
+            throw new InterruptedException("Unexpected status: " + postFileResult.getStatus() + " from oak9 API");
         }
 
-        taskListener.getLogger().print("Waiting for oak9 analysis...\n");
-
+        taskListener.getLogger().print("Waiting for oak9 analysis for Request ID " + postFileResult.getRequestId() + "...\n");
+        ValidationResult statusResult = client.pollStatus(postFileResult);
 
         // Analyze Results
-        taskListener.getLogger().print("Analyzing oak9 scan results...\n");
+        taskListener.getLogger().print("Analyzing oak9 scan results for Request ID " + statusResult.getRequestId() + "...\n");
+        for (DesignGap designGap : statusResult.getDesignGaps()) {
+            for (Violation violation : designGap.getViolations()) {
+                if (violation.getOak9Severity() == this.maxSeverity) {
+                    throw new InterruptedException("Design Gap found with severity at or above " + this.maxSeverity);
+                }
+            }
+        }
 
         taskListener.getLogger().println("oak9 Runner Complete\n");
 
