@@ -5,7 +5,6 @@ import hudson.model.TaskListener;
 import io.jenkins.plugins.oak9.model.ApiResponse;
 import io.jenkins.plugins.oak9.model.ValidationResult;
 import okhttp3.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +37,12 @@ public class oak9ApiClient<Int> {
 
     public ValidationResult postFileValidation(File file, int attempts) throws IOException, InterruptedException {
 
+        if (!file.exists()) {
+            throw new InterruptedException("File sent to API POST does not exist.\n");
+        } else {
+            jenkinsTaskListener.getLogger().println("File exists, size is " + file.length());
+        }
+
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("files", file.getName(),
@@ -47,6 +52,9 @@ public class oak9ApiClient<Int> {
         String credentials = Credentials.basic(this.orgId, this.key);
         Request request = new Request.Builder()
                 .header("Authorization", credentials)
+                .header("Accept", "*/*")
+                .header("Cache-Control", "no-cache")
+                .header("Accept-Encoding", "gzip, deflate, br")
                 .url(this.baseUrl + "/" + this.orgId + "/validations/proj-" + this.projectId + "/queue/iac?files")
                 .post(requestBody)
                 .build();
@@ -65,13 +73,11 @@ public class oak9ApiClient<Int> {
 
                     attempts++;
                     Thread.sleep(1000);
-                    postFileValidation(file , attempts);
-                    break;
+                    return postFileValidation(file , attempts);
                 default:
                     throw new IOException("Communication with oak9 API unsuccessful. Received error code " + response.code() + "\n");
             }
         }
-        throw new IOException("Unable to execute API request.\n");
     }
 
     public ValidationResult pollStatus(ValidationResult result) throws IOException, InterruptedException {
@@ -93,23 +99,29 @@ public class oak9ApiClient<Int> {
                     case "queued":
                     case "inprogress":
                         if (attempts > this.maxAttempts) {
-                            throw new IOException("Timed out waiting for oak9 scan to complete.\n");
+                            throw new IOException("Max attempts reached to obtain an Oak9 status. Aborting.\n");
                         }
 
                         attempts++;
                         jenkinsTaskListener.getLogger().println("Waiting for results (" + attempts + " seconds elapsed)\n");
                         Thread.sleep(1000);
-                        pollStatus(result, attempts);
-                        break;
+                        return pollStatus(result, attempts);
                     case "completed":
+                        jenkinsTaskListener.getLogger().println("Scanning completed. Returning results...\n");
                         return apiResponse.getResult();
                     default:
                         throw new IOException("Unexpected task status: " + apiResponse.getStatus() + ".\n");
                 }
             } else {
+                // if we got a timeout or a slow down response, let's wait 10s and try again
+                if (response.code() == 503 || response.code() == 504) {
+                    attempts++;
+                    jenkinsTaskListener.getLogger().println("Received a rate limit or timeout. Pausing 10s before trying again.\n");
+                    Thread.sleep(10000);
+                    return pollStatus(result, attempts);
+                }
                 throw new IOException("API Request Unsuccessful. Received error code: " + response.code() + "\n");
             }
         }
-        throw new IOException("Unable to execute API request.\n");
     }
 }

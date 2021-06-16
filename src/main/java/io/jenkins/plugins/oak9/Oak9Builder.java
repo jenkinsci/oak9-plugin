@@ -1,6 +1,5 @@
 package io.jenkins.plugins.oak9;
 
-import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.*;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -16,31 +15,22 @@ import hudson.tasks.Builder;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.util.ListBoxModel;
 import hudson.security.ACL;
-import io.jenkins.plugins.oak9.Messages;
 import io.jenkins.plugins.oak9.model.DesignGap;
 import io.jenkins.plugins.oak9.model.ValidationResult;
 import io.jenkins.plugins.oak9.model.Violation;
-import io.jenkins.plugins.oak9.utils.FileArchiver;
-import io.jenkins.plugins.oak9.utils.FileScanner;
-import io.jenkins.plugins.oak9.utils.IacExtensionFilter;
-import io.jenkins.plugins.oak9.utils.oak9ApiClient;
+import io.jenkins.plugins.oak9.utils.*;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.WordUtils;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
-
 import static com.cloudbees.plugins.credentials.domains.URIRequirementBuilder.fromUri;
 import javax.servlet.ServletException;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
-import java.util.zip.ZipOutputStream;
+import java.util.Map;
 
 import jenkins.tasks.SimpleBuildStep;
 
@@ -49,10 +39,10 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     private String orgId;
     private String projectId;
     private String credentialsId;
-    private String maxSeverity;
+    private int maxSeverity;
 
     @DataBoundConstructor
-    public Oak9Builder(String orgId, String projectId, String credentialsId, String maxSeverity) {
+    public Oak9Builder(String orgId, String projectId, String credentialsId, int maxSeverity) {
         this.orgId = orgId;
         this.projectId = projectId;
         this.credentialsId = credentialsId;
@@ -75,7 +65,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setMaxSeverity(String maxSeverity) {
+    public void setMaxSeverity(int maxSeverity) {
         this.maxSeverity = maxSeverity;
     }
 
@@ -91,7 +81,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         return this.credentialsId;
     }
 
-    public String getMaxSeverity() {
+    public int getMaxSeverity() {
         return this.maxSeverity;
     }
 
@@ -118,9 +108,12 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         FileArchiver archiver = new FileArchiver(workspace.absolutize(), IacFiles, "oak9.zip");
         archiver.zipFiles(workspace.absolutize().toString());
 
-        File zipFile = new File("oak9.zip");
-        if (!zipFile.exists()) {
-            throw new InterruptedException("Unable to generate zip file. Aborting.\n");
+        String zipFilePath = workspace.absolutize() + File.separator + "oak9.zip";
+        File zipFile = new File(zipFilePath);
+        if (!zipFile.exists() || zipFile.length() == 0) {
+            throw new InterruptedException("Unable to generate zip file: " + zipFilePath +". Aborting.\n");
+        } else {
+            taskListener.getLogger().println("Zip file generated with size: " + zipFile.length() + "\n");
         }
 
         // Make request to oak9 API to push zip file
@@ -133,7 +126,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         if (!postFileResult.getStatus().toLowerCase().equals("queued") && !postFileResult.getStatus().toLowerCase().equals("completed")){
             throw new InterruptedException("Unexpected status: " + postFileResult.getStatus() + " from oak9 API");
         }
-        taskListener.getLogger().print("Files in status: " + postFileResult.getStatus() + " with requestId: " + postFileResult.getRequestId());
+        taskListener.getLogger().print("Files in status: " + postFileResult.getStatus() + " with requestId: " + postFileResult.getRequestId() + "\n");
         taskListener.getLogger().print("Waiting for oak9 analysis for Request ID " + postFileResult.getRequestId() + "...\n");
         ValidationResult statusResult = client.pollStatus(postFileResult);
 
@@ -141,14 +134,16 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         taskListener.getLogger().print("Analyzing oak9 scan results for Request ID " + statusResult.getRequestId() + "...\n");
         for (DesignGap designGap : statusResult.getDesignGaps()) {
             for (Violation violation : designGap.getViolations()) {
-                if (violation.getOak9Severity() == this.maxSeverity) {
+                taskListener.getLogger().println("Scanning Design Gaps for severity `" + this.maxSeverity + "` or higher...\n");
+                if (Severity.exceedsSeverity(this.maxSeverity, violation.getSeverity())) {
                     throw new InterruptedException("Design Gap found with severity at or above " + this.maxSeverity + "\n");
+                } else {
+                    taskListener.getLogger().println("Design Gap with Severity " + violation.getOak9Severity() + "\n");
                 }
             }
         }
 
         taskListener.getLogger().println("oak9 Runner Complete\n");
-
     }
 
     public static StringCredentials getCredentials(Run<?, ?> run, String credentialsId) {
@@ -179,6 +174,14 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
             return FormValidation.ok();
         }
 
+        public ListBoxModel doFillMaxSeverityItems() {
+            ListBoxModel items = new ListBoxModel();
+            for (Map.Entry<String,Integer> severity : Severity.severities.entrySet()) {
+                items.add(WordUtils.capitalize(severity.getKey()), severity.getValue().toString());
+            }
+            return items;
+        }
+
         public ListBoxModel doFillCredentialsIdItems(@QueryParameter String serverUrl,
                                                      @QueryParameter String credentialsId) {
             Jenkins jenkins = Jenkins.get();
@@ -206,6 +209,5 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         }
 
     }
-
 
 }

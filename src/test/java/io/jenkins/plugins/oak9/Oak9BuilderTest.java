@@ -23,7 +23,7 @@ class Oak9BuilderTest {
 
     @BeforeEach
     void setUp() {
-        oak9BuilderUnderTest = new Oak9Builder("orgId", "projectId", "oak9-api-key", "maxSeverity");
+        oak9BuilderUnderTest = new Oak9Builder("orgId", "projectId", "oak9-api-key", 2);
     }
 
     @Test

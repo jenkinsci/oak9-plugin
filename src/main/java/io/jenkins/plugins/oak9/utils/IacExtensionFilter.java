@@ -1,8 +1,6 @@
 package io.jenkins.plugins.oak9.utils;
 
-import org.apache.commons.io.filefilter.AbstractFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.io.Serializable;

@@ -1,9 +1,7 @@
 package io.jenkins.plugins.oak9.utils;
 
 import hudson.FilePath;
-
 import java.io.*;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
