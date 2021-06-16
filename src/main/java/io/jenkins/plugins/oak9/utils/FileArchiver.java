@@ -29,7 +29,7 @@ public class FileArchiver {
         ZipOutputStream zipOut = new ZipOutputStream(fos);
         for (File file : this.filesList) {
             FileInputStream fis = new FileInputStream(file);
-            ZipEntry zipEntry = new ZipEntry(file.toString().replace(base_path, ""));
+            ZipEntry zipEntry = new ZipEntry(file.getName());
             zipOut.putNextEntry(zipEntry);
 
             byte[] bytes = new byte[1024];

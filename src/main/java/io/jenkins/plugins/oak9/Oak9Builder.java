@@ -27,6 +27,7 @@ import io.jenkins.plugins.oak9.utils.oak9ApiClient;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 
@@ -45,16 +46,36 @@ import jenkins.tasks.SimpleBuildStep;
 
 public class Oak9Builder extends Builder implements SimpleBuildStep {
 
-    private final String orgId;
-    private final String projectId;
-    private final String credentialsId;
-    private final String maxSeverity;
+    private String orgId;
+    private String projectId;
+    private String credentialsId;
+    private String maxSeverity;
 
     @DataBoundConstructor
     public Oak9Builder(String orgId, String projectId, String credentialsId, String maxSeverity) {
         this.orgId = orgId;
         this.projectId = projectId;
         this.credentialsId = credentialsId;
+        this.maxSeverity = maxSeverity;
+    }
+
+    @DataBoundSetter
+    public void setOrgId(String orgId) {
+        this.orgId = orgId;
+    }
+
+    @DataBoundSetter
+    public void setProjectId(String projectId) {
+        this.projectId = projectId;
+    }
+
+    @DataBoundSetter
+    public void setCredentialsId(String credentialsId) {
+        this.credentialsId = credentialsId;
+    }
+
+    @DataBoundSetter
+    public void setMaxSeverity(String maxSeverity) {
         this.maxSeverity = maxSeverity;
     }
 
@@ -89,7 +110,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         // Find list of IaC files
         Collection<File> IacFiles = FileScanner.scanForIacFiles(workspace.absolutize(), new IacExtensionFilter());
         if (IacFiles.size() == 0) {
-            throw new IOException("No IaC files could be found!");
+            throw new IOException("No IaC files could be found!\n");
         }
 
         // Zip Files
@@ -99,7 +120,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
 
         File zipFile = new File("oak9.zip");
         if (!zipFile.exists()) {
-            throw new InterruptedException("Unable to generate zip file. Aborting.");
+            throw new InterruptedException("Unable to generate zip file. Aborting.\n");
         }
 
         // Make request to oak9 API to push zip file
@@ -112,7 +133,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         if (!postFileResult.getStatus().toLowerCase().equals("queued") && !postFileResult.getStatus().toLowerCase().equals("completed")){
             throw new InterruptedException("Unexpected status: " + postFileResult.getStatus() + " from oak9 API");
         }
-
+        taskListener.getLogger().print("Files in status: " + postFileResult.getStatus() + " with requestId: " + postFileResult.getRequestId());
         taskListener.getLogger().print("Waiting for oak9 analysis for Request ID " + postFileResult.getRequestId() + "...\n");
         ValidationResult statusResult = client.pollStatus(postFileResult);
 
@@ -121,7 +142,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         for (DesignGap designGap : statusResult.getDesignGaps()) {
             for (Violation violation : designGap.getViolations()) {
                 if (violation.getOak9Severity() == this.maxSeverity) {
-                    throw new InterruptedException("Design Gap found with severity at or above " + this.maxSeverity);
+                    throw new InterruptedException("Design Gap found with severity at or above " + this.maxSeverity + "\n");
                 }
             }
         }

@@ -12,13 +12,12 @@ import java.util.concurrent.TimeUnit;
 
 public class oak9ApiClient<Int> {
 
-    private final String baseUrl;
+    private String baseUrl;
     private final String key;
     private final String orgId;
     private final String projectId;
     private final OkHttpClient client;
     private final int maxAttempts = 30;
-    private static final MediaType MEDIA_TYPE_ZIP = MediaType.parse("application/zip");
     private final TaskListener jenkinsTaskListener;
 
     public oak9ApiClient(String baseUrl, String key, String orgId, String projectId, TaskListener jenkinsTaskListener) {
@@ -27,7 +26,10 @@ public class oak9ApiClient<Int> {
         this.orgId = orgId;
         this.projectId = projectId;
         this.jenkinsTaskListener = jenkinsTaskListener;
-        this.client = new OkHttpClient();
+        this.client = new OkHttpClient.Builder()
+                .connectTimeout(5, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .build();
     }
 
     public ValidationResult postFileValidation(File file) throws IOException, InterruptedException {
@@ -39,7 +41,7 @@ public class oak9ApiClient<Int> {
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("files", file.getName(),
-                        RequestBody.create(file, MEDIA_TYPE_ZIP))
+                        RequestBody.create(file, MediaType.parse("application/zip")))
                 .build();
 
         String credentials = Credentials.basic(this.orgId, this.key);
@@ -52,14 +54,13 @@ public class oak9ApiClient<Int> {
         try (Response response = client.newCall(request).execute()) {
             switch (response.code()) {
                 case 200:
-                    jenkinsTaskListener.getLogger().println("Got a 200");
                     ObjectMapper mapper = new ObjectMapper();
                     ApiResponse apiResponse = mapper.readValue(response.body().charStream(), ApiResponse.class);
                     return apiResponse.getResult();
                 case 503:
-                    jenkinsTaskListener.getLogger().println("Got a 503");
+                    jenkinsTaskListener.getLogger().println("oak9 API rate limit reached. Waiting 1s before trying again.\n");
                     if (attempts > this.maxAttempts) {
-                        throw new InterruptedException("Communication with oak9 API has timed out.\n");
+                        throw new IOException("Communication with oak9 API has timed out.\n");
                     }
 
                     attempts++;
@@ -67,11 +68,10 @@ public class oak9ApiClient<Int> {
                     postFileValidation(file , attempts);
                     break;
                 default:
-                    jenkinsTaskListener.getLogger().println("Got a " + response.code());
-                    throw new InterruptedException("Communication with oak9 API unsuccessful.\n");
+                    throw new IOException("Communication with oak9 API unsuccessful. Received error code " + response.code() + "\n");
             }
         }
-        throw new InterruptedException("Unable to complete API request.");
+        throw new IOException("Unable to execute API request.\n");
     }
 
     public ValidationResult pollStatus(ValidationResult result) throws IOException, InterruptedException {
@@ -91,24 +91,25 @@ public class oak9ApiClient<Int> {
                 ApiResponse apiResponse = mapper.readValue(response.body().charStream(), ApiResponse.class);
                 switch (apiResponse.getStatus().toLowerCase()) {
                     case "queued":
+                    case "inprogress":
                         if (attempts > this.maxAttempts) {
-                            throw new InterruptedException("Timed out waiting for oak9 scan to complete.\n");
+                            throw new IOException("Timed out waiting for oak9 scan to complete.\n");
                         }
 
                         attempts++;
-                        jenkinsTaskListener.getLogger().println("Waiting for results (" + attempts + " seconds elapsed)");
+                        jenkinsTaskListener.getLogger().println("Waiting for results (" + attempts + " seconds elapsed)\n");
                         Thread.sleep(1000);
                         pollStatus(result, attempts);
                         break;
                     case "completed":
                         return apiResponse.getResult();
                     default:
-                        throw new InterruptedException("Unexpected.\n");
+                        throw new IOException("Unexpected task status: " + apiResponse.getStatus() + ".\n");
                 }
             } else {
-                throw new InterruptedException("API Request Unsuccessful");
+                throw new IOException("API Request Unsuccessful. Received error code: " + response.code() + "\n");
             }
         }
-        throw new InterruptedException("Unable to complete API request.");
+        throw new IOException("Unable to execute API request.\n");
     }
 }
