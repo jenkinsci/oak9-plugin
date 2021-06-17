@@ -9,7 +9,16 @@ import java.util.Collection;
 
 public class FileScanner {
 
-    public static Collection<File> scanForIacFiles(FilePath path, FileFilter filter) throws IOException, InterruptedException {
+    /**
+     * Scan for infrastructure as code files to ship to oak9
+     *
+     * @param path The path toscan for IaC files
+     * @param filter A file filter to be used to filter out unwanted files
+     * @return Collection of IaC files
+     * @throws IOException thrown if the provided path does not exist
+     * @throws IllegalArgumentException thrown if the path provided is not a directory
+     */
+    public static Collection<File> scanForIacFiles(FilePath path, FileFilter filter) throws IOException, IllegalArgumentException {
 
         // generate a Java path from the Jenkins FilePath object
         File workspace_path = new File(path.toString());
@@ -22,7 +31,7 @@ public class FileScanner {
             throw new IllegalArgumentException("Path must be a directory!");
         }
         String[] extensions = {"tf", "tfvars", "tfstate", "json", "yaml"};
-        Collection files = FileUtils.listFiles(workspace_path, extensions , true);
+        Collection<File> files = FileUtils.listFiles(workspace_path, extensions , true);
         return files;
     }
 }

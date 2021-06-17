@@ -36,11 +36,34 @@ import jenkins.tasks.SimpleBuildStep;
 
 public class Oak9Builder extends Builder implements SimpleBuildStep {
 
+    /**
+     * Oak9 org ID
+     */
     private String orgId;
+
+    /**
+     * Oak9 Project ID
+     */
     private String projectId;
+
+    /**
+     * Jenkins credentials that store the Oak9 API Key
+     */
     private String credentialsId;
+
+    /**
+     * Max severity before failure
+     */
     private int maxSeverity;
 
+    /**
+     * Constructor is setup by Jenkins when it instantiates the plugin
+     *
+     * @param orgId
+     * @param projectId
+     * @param credentialsId
+     * @param maxSeverity
+     */
     @DataBoundConstructor
     public Oak9Builder(String orgId, String projectId, String credentialsId, int maxSeverity) {
         this.orgId = orgId;
@@ -89,6 +112,17 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         return workspace;
     }
 
+    /**
+     * Jenkins plugin entry point.
+     *
+     * @param run
+     * @param workspace
+     * @param env
+     * @param launcher
+     * @param taskListener
+     * @throws InterruptedException
+     * @throws IOException
+     */
     @Override
     public void perform(
                         @NonNull Run<?, ?> run,
@@ -146,6 +180,13 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         taskListener.getLogger().println("oak9 Runner Complete\n");
     }
 
+    /**
+     * Fetch Jenkins credentials by CredentialId
+     *
+     * @param run
+     * @param credentialsId
+     * @return
+     */
     public static StringCredentials getCredentials(Run<?, ?> run, String credentialsId) {
         return CredentialsProvider.findCredentialById(credentialsId, StringCredentials.class, run);
     }
@@ -153,6 +194,14 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
+        /**
+         * Check to make sure the user has entered an Org Id
+         *
+         * @param value
+         * @return
+         * @throws IOException
+         * @throws ServletException
+         */
         public FormValidation doCheckOrgId(@QueryParameter String value)
                 throws IOException, ServletException {
             if (value.length() == 0)
@@ -160,6 +209,14 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
             return FormValidation.ok();
         }
 
+        /**
+         * Check to make sure the user has entered a Project Id
+         *
+         * @param value
+         * @return
+         * @throws IOException
+         * @throws ServletException
+         */
         public FormValidation doCheckProjectId(@QueryParameter String value)
                 throws IOException, ServletException {
             if (value.length() == 0)
@@ -167,6 +224,14 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
             return FormValidation.ok();
         }
 
+        /**
+         * Check to make sure the user has selected a credential
+         *
+         * @param value
+         * @return
+         * @throws IOException
+         * @throws ServletException
+         */
         public FormValidation doCheckCredentialsId(@QueryParameter String value)
                 throws IOException, ServletException {
             if (value.length() == 0)
@@ -174,6 +239,11 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
             return FormValidation.ok();
         }
 
+        /**
+         * Fill the select list with available Oak9 Severities
+         *
+         * @return ListBoxModel
+         */
         public ListBoxModel doFillMaxSeverityItems() {
             ListBoxModel items = new ListBoxModel();
             for (Map.Entry<String,Integer> severity : Severity.severities.entrySet()) {
@@ -182,6 +252,13 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
             return items;
         }
 
+        /**
+         * Fill the select list with permissible credentials
+         *
+         * @param serverUrl
+         * @param credentialsId
+         * @return
+         */
         public ListBoxModel doFillCredentialsIdItems(@QueryParameter String serverUrl,
                                                      @QueryParameter String credentialsId) {
             Jenkins jenkins = Jenkins.get();

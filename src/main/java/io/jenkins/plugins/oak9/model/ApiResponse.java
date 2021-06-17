@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
         "requestId",
@@ -19,6 +20,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "result",
         "resultsUrl"
 })
+
+/**
+ * This is generated code from the jsonschema2pojo library based upon the oak9 Swagger docs. It is not recommended to
+ * make manual changes to this code.
+ *
+ * see https://github.com/joelittlejohn/jsonschema2pojo for usage instructions
+ */
 @Generated("jsonschema2pojo")
 public class ApiResponse {
 

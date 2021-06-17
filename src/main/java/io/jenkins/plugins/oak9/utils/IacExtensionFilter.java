@@ -11,6 +11,12 @@ public final class IacExtensionFilter
         implements FileFilter, Serializable, IOFileFilter {
     private final List<String> allowedExtensionPatterns = Arrays.asList(".*\\.tf.*", ".*\\.json", ".*\\.yaml");
 
+    /**
+     * Override for accept criteria on FileFilter
+     *
+     * @param file the file to be evaluated
+     * @return whether the file is accepted or not
+     */
     @Override
     public boolean accept(File file) {
         // we don't want directories as individual entities
@@ -27,6 +33,12 @@ public final class IacExtensionFilter
         return false;
     }
 
+    /**
+     * Override for accept criteria on IFFileFilter
+     *
+     * @param file to be evaluated
+     * @return whether the evaluation as passed
+     */
     @Override
     public boolean accept(File file, String s) {
         File complete_file = new File(file.getName() + File.separator + s);

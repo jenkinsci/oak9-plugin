@@ -8,20 +8,49 @@ import java.util.zip.ZipOutputStream;
 
 public class FileArchiver {
 
+    /**
+     * list of files to ship to oak9
+     */
     private final Collection<File> filesList;
+
+    /**
+     * output zip file name
+     */
     private final String outputFileName;
+
+    /**
+     * base path to Jenkins workspace, used to clean up file pathing inside zip
+     */
     private final FilePath basePath;
 
+    /**
+     * Constructor
+     *
+     * @param basePath
+     * @param filesList
+     * @param outputFileName
+     */
     public FileArchiver(FilePath basePath, Collection<File> filesList, String outputFileName) {
         this.filesList = filesList;
         this.basePath = basePath;
         this.outputFileName = outputFileName;
     }
 
+    /**
+     * Zip files without specifying a base path - may create overly large directory tree in zip
+     *
+     * @throws IOException
+     */
     public void zipFiles() throws IOException {
         zipFiles("");
     }
 
+    /**
+     * Zip files to ship to oak9
+     *
+     * @param base_path
+     * @throws IOException
+     */
     public void zipFiles(String base_path) throws IOException {
         FileOutputStream fos = new FileOutputStream(this.basePath + File.separator + this.outputFileName);
         ZipOutputStream zipOut = new ZipOutputStream(fos);

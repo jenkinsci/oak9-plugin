@@ -11,14 +11,50 @@ import java.util.concurrent.TimeUnit;
 
 public class oak9ApiClient<Int> {
 
+    /**
+     * The base url of the oak9 API
+     */
     private String baseUrl;
+
+    /**
+     * oak9 API Key
+     */
     private final String key;
+
+    /**
+     * oak9 org ID
+     */
     private final String orgId;
+
+    /**
+     * oak9 Project ID
+     */
     private final String projectId;
+
+    /**
+     * okhttp3 client
+     */
     private final OkHttpClient client;
+
+    /**
+     * Max attempts to communicate with an API endpoint before giving up
+     */
     private final int maxAttempts = 30;
+
+    /**
+     * Jenkins task listener, primarily used for logging
+     */
     private final TaskListener jenkinsTaskListener;
 
+    /**
+     * Constructor
+     *
+     * @param baseUrl
+     * @param key
+     * @param orgId
+     * @param projectId
+     * @param jenkinsTaskListener
+     */
     public oak9ApiClient(String baseUrl, String key, String orgId, String projectId, TaskListener jenkinsTaskListener) {
         this.baseUrl = baseUrl;
         this.key = key;
@@ -31,10 +67,26 @@ public class oak9ApiClient<Int> {
                 .build();
     }
 
+    /**
+     * post file for validation endpoint without providing a starting count of attempts
+     *
+     * @param file
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public ValidationResult postFileValidation(File file) throws IOException, InterruptedException {
         return this.postFileValidation(file, 0);
     }
 
+    /**
+     * post file for validation endpoint with a starting count of attempts
+     * @param file
+     * @param attempts
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public ValidationResult postFileValidation(File file, int attempts) throws IOException, InterruptedException {
 
         if (!file.exists()) {
@@ -80,10 +132,27 @@ public class oak9ApiClient<Int> {
         }
     }
 
+    /**
+     * Poll oak9 for validation status
+     *
+     * @param result
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public ValidationResult pollStatus(ValidationResult result) throws IOException, InterruptedException {
         return pollStatus(result, 0);
     }
 
+    /**
+     * Poll oak9 for validation status
+     *
+     * @param result
+     * @param attempts
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public ValidationResult pollStatus(ValidationResult result, int attempts) throws IOException, InterruptedException {
         String credentials = Credentials.basic(this.orgId, this.key);
         Request request = new Request.Builder()
