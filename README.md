@@ -23,7 +23,27 @@ point the Jenkins job should fail.
 
 1. Provide your oak9 API key as a Credential. The credential type must be `Secret Text` and your API key must be placed
    in the `Secret` field.
+2. In your Jenkinsfile, add a step for the Oak9Builder: `step([$class: 'Oak9Builder', credentialsId: 'oak9-api-key', orgId: "acme-company", projectId: "acme-company-1", maxSeverity: 2])`
+3. A simple, but complete, pipeline description might look like:
+```
+pipeline {
+    agent any
 
+    stages {
+        stage('Build') {
+            steps {
+                step([$class: 'Oak9Builder', credentialsId: 'oak9-api-key', orgId: "acme-company", projectId: "acme-company-1", maxSeverity: 2])
+            }
+        }
+    }
+}
+```
+4. When using the Pipeline configuration, severities are as follows:
+   1. 0 - Do not fail in any case.
+   1. 1 - Fail for Low and above
+   1. 2 - Fail for Moderate and above
+   1. 3 - Fail for High and above
+   1. 4 - Fail for Severe only
 ### Building for Dev
 This project uses Maven for fetching dependencies, building code, and running a test environment of Jenkins. 
 

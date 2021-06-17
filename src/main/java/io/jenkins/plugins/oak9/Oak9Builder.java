@@ -138,11 +138,13 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         }
 
         // Zip Files
+        long zipTimestamp = System.currentTimeMillis() / 1000L;
+        String zipOutputFile = "oak9-" + zipTimestamp + ".zip";
         taskListener.getLogger().println("Packaging IaC files for oak9...\n");
-        FileArchiver archiver = new FileArchiver(workspace.absolutize(), IacFiles, "oak9.zip");
+        FileArchiver archiver = new FileArchiver(workspace.absolutize(), IacFiles, zipOutputFile);
         archiver.zipFiles(workspace.absolutize().toString());
 
-        String zipFilePath = workspace.absolutize() + File.separator + "oak9.zip";
+        String zipFilePath = workspace.absolutize() + File.separator + zipOutputFile;
         File zipFile = new File(zipFilePath);
         if (!zipFile.exists() || zipFile.length() == 0) {
             throw new InterruptedException("Unable to generate zip file: " + zipFilePath +". Aborting.\n");
@@ -166,13 +168,15 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
 
         // Analyze Results
         taskListener.getLogger().print("Analyzing oak9 scan results for Request ID " + statusResult.getRequestId() + "...\n");
-        for (DesignGap designGap : statusResult.getDesignGaps()) {
-            for (Violation violation : designGap.getViolations()) {
-                taskListener.getLogger().println("Scanning Design Gaps for severity `" + this.maxSeverity + "` or higher...\n");
-                if (Severity.exceedsSeverity(this.maxSeverity, violation.getSeverity())) {
-                    throw new InterruptedException("Design Gap found with severity at or above " + this.maxSeverity + "\n");
-                } else {
-                    taskListener.getLogger().println("Design Gap with Severity " + violation.getOak9Severity() + "\n");
+        if (maxSeverity > 0) {
+            for (DesignGap designGap : statusResult.getDesignGaps()) {
+                for (Violation violation : designGap.getViolations()) {
+                    taskListener.getLogger().println("Scanning Design Gaps for severity `" + this.maxSeverity + "` or higher...\n");
+                    if (Severity.exceedsSeverity(this.maxSeverity, violation.getSeverity())) {
+                        throw new IOException("Design Gap found with severity at or above " + this.maxSeverity + "\n");
+                    } else {
+                        taskListener.getLogger().println("Design Gap with Severity " + violation.getOak9Severity() + "\n");
+                    }
                 }
             }
         }
