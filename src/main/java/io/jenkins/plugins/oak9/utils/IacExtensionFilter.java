@@ -41,7 +41,7 @@ public final class IacExtensionFilter
      */
     @Override
     public boolean accept(File file, String s) {
-        File complete_file = new File(file.getName() + File.separator + s);
+        File complete_file = new File(file.getName());
         return accept(complete_file);
     }
 }

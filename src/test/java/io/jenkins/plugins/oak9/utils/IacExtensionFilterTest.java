@@ -19,7 +19,7 @@ class IacExtensionFilterTest {
     @Test
     void testAccept1() {
         // Setup
-        final File file = new File("filename.txt");
+        final File file = new File("test.tf");
 
         // Run the test
         final boolean result = iacExtensionFilterUnderTest.accept(file);
@@ -31,7 +31,7 @@ class IacExtensionFilterTest {
     @Test
     void testAccept2() {
         // Setup
-        final File file = new File("filename.txt");
+        final File file = new File("test.tf");
 
         // Run the test
         final boolean result = iacExtensionFilterUnderTest.accept(file, "s");

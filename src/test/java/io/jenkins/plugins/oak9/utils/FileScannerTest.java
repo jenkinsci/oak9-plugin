@@ -37,14 +37,4 @@ class FileScannerTest {
         // Run the test
         assertThrows(IOException.class, () -> FileScanner.scanForIacFiles(path, filter));
     }
-
-    @Test
-    void testScanForIacFiles_ThrowsInterruptedException() {
-        // Setup
-        final FilePath path = new FilePath(new File("filename.txt"));
-        final FileFilter filter = null;
-
-        // Run the test
-        assertThrows(InterruptedException.class, () -> FileScanner.scanForIacFiles(path, filter));
-    }
 }

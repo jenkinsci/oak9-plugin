@@ -120,7 +120,6 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
      * @param env
      * @param launcher
      * @param taskListener
-     * @throws InterruptedException
      * @throws IOException
      */
     @Override
@@ -130,7 +129,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                         @NonNull EnvVars env,
                         @NonNull Launcher launcher,
                         @NonNull TaskListener taskListener
-    ) throws InterruptedException, IOException {
+    ) throws IOException, InterruptedException {
         // Find list of IaC files
         Collection<File> IacFiles = FileScanner.scanForIacFiles(workspace.absolutize(), new IacExtensionFilter());
         if (IacFiles.size() == 0) {
