@@ -107,7 +107,7 @@ public class oak9ApiClient<Int> {
                 .header("Accept", "*/*")
                 .header("Cache-Control", "no-cache")
                 .header("Accept-Encoding", "gzip, deflate, br")
-                .url(this.baseUrl + "/" + this.orgId + "/validations/proj-" + this.projectId + "/queue/iac?files")
+                .url(this.baseUrl + "/" + this.orgId + "/validations/" + this.projectId + "/queue/iac?files")
                 .post(requestBody)
                 .build();
 
@@ -157,7 +157,7 @@ public class oak9ApiClient<Int> {
         String credentials = Credentials.basic(this.orgId, this.key);
         Request request = new Request.Builder()
                 .header("Authorization", credentials)
-                .url(this.baseUrl + "/" + this.orgId + "/validations/proj-" + this.projectId + "/" + result.getRequestId() + "/status")
+                .url(this.baseUrl + "/" + this.orgId + "/validations/" + this.projectId + "/" + result.getRequestId() + "/status")
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
