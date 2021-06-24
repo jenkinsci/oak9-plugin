@@ -56,7 +56,7 @@ public class FileArchiver {
         ZipOutputStream zipOut = new ZipOutputStream(fos);
         for (File file : this.filesList) {
             FileInputStream fis = new FileInputStream(file);
-            ZipEntry zipEntry = new ZipEntry(file.getName());
+            ZipEntry zipEntry = new ZipEntry(file.getAbsoluteFile().toString().replace(base_path, ""));
             zipOut.putNextEntry(zipEntry);
 
             byte[] bytes = new byte[1024];
