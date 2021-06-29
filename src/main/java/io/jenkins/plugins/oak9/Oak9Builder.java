@@ -9,6 +9,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.util.FormValidation;
 import hudson.model.AbstractProject;
+import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.Builder;
@@ -172,7 +173,8 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                 for (Violation violation : designGap.getViolations()) {
                     taskListener.getLogger().println("Scanning Design Gaps for severity `" + this.maxSeverity + "` or higher...\n");
                     if (Severity.exceedsSeverity(this.maxSeverity, violation.getSeverity())) {
-                        throw new IOException("Design Gap found with severity at or above " + this.maxSeverity + "\n");
+                        taskListener.error("Design Gap found with severity at or above " + this.maxSeverity + "\n");
+                        run.setResult(Result.FAILURE);
                     } else {
                         taskListener.getLogger().println("Design Gap with Severity " + violation.getOak9Severity() + "\n");
                     }
