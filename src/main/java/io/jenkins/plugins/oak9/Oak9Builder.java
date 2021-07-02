@@ -230,7 +230,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         // Analyze Results
         taskListener.getLogger().print("Analyzing oak9 scan results for Request ID " + statusResult.getRequestId() + "...\n");
         if (maxSeverity > 0) {
-            taskListener.getLogger().println("Scanning Design Gaps for severity `" + this.maxSeverity + "` or higher...\n");
+            taskListener.getLogger().println("Scanning Design Gaps for severity `" + Severity.getTextForSeverityLevel(maxSeverity) + "` or higher...\n");
             for (DesignGap designGap : statusResult.getDesignGaps()) {
                 for (Violation violation : designGap.getViolations()) {
                     trackViolationCounts(violation);

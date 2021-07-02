@@ -1,6 +1,7 @@
 package io.jenkins.plugins.oak9.utils;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class Severity
@@ -24,6 +25,16 @@ public class Severity
      */
     public static boolean exceedsSeverity(int maxSeverity, String currentSeverity) {
         return Severity.severities.get(currentSeverity.trim().toLowerCase()) >= maxSeverity;
+    }
+
+    public static String getTextForSeverityLevel(int value) {
+        String response = "";
+        for(Map.Entry<String, Integer> entry : Severity.severities.entrySet()){
+            String textValue = entry.getKey();
+            response = (entry.getValue() == value) ? textValue.substring(0, 1).toUpperCase() + textValue.substring(1) : response;
+        }
+
+        return response;
     }
 
 }
