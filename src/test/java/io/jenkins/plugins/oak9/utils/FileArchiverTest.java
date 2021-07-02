@@ -16,12 +16,13 @@ class FileArchiverTest {
 
     @BeforeEach
     void setUp() {
-        fileArchiverUnderTest = new FileArchiver(new FilePath(new File("filename.txt")), Arrays.asList(new File("filename.txt")), "outputFileName");
+        fileArchiverUnderTest = new FileArchiver(new FilePath(new File("filename.txt")), Arrays.asList(new File("filename.txt")), "test.zip");
     }
 
     @Test
     void testZipFiles1() throws Exception {
         // Setup
+
 
         // Run the test
         fileArchiverUnderTest.zipFiles();
@@ -31,8 +32,6 @@ class FileArchiverTest {
 
     @Test
     void testZipFiles1_ThrowsIOException() {
-        // Setup
-
         // Run the test
         assertThrows(IOException.class, () -> fileArchiverUnderTest.zipFiles());
     }

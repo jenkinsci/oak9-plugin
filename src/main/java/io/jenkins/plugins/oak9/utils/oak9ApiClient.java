@@ -9,12 +9,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-public class oak9ApiClient<Int> {
+public class oak9ApiClient {
 
     /**
      * The base url of the oak9 API
      */
-    private String baseUrl;
+    private final String baseUrl;
 
     /**
      * oak9 API Key
@@ -47,6 +47,11 @@ public class oak9ApiClient<Int> {
     private final TaskListener jenkinsTaskListener;
 
     /**
+     * A delay in ms to wait before re-attempting an API request that received a transient error
+     */
+    private final int transientErrorDelayInMs = 1000;
+
+    /**
      * Constructor
      *
      * @param baseUrl
@@ -75,22 +80,21 @@ public class oak9ApiClient<Int> {
      * @throws IOException
      * @throws InterruptedException
      */
-    public ValidationResult postFileValidation(File file) throws IOException, InterruptedException {
+    public ValidationResult postFileValidation(File file) throws IOException {
         return this.postFileValidation(file, 0);
     }
 
     /**
      * post file for validation endpoint with a starting count of attempts
-     * @param file
-     * @param attempts
-     * @return
-     * @throws IOException
-     * @throws InterruptedException
+     * @param file the zip file to be posted
+     * @param attempts current number of attempts
+     * @return the oak9 validation result
+     * @throws IOException thrown if the file is invalid or the oak9 API request fails
      */
-    public ValidationResult postFileValidation(File file, int attempts) throws IOException, InterruptedException {
+    public ValidationResult postFileValidation(File file, int attempts) throws IOException {
 
         if (!file.exists()) {
-            throw new InterruptedException("File sent to API POST does not exist.\n");
+            throw new IOException("File sent to API POST does not exist.\n");
         } else {
             jenkinsTaskListener.getLogger().println("File exists, size is " + file.length());
         }
@@ -124,7 +128,7 @@ public class oak9ApiClient<Int> {
                     }
 
                     attempts++;
-                    Thread.sleep(1000);
+                    pauseApiRequests(transientErrorDelayInMs);
                     return postFileValidation(file , attempts);
                 default:
                     throw new IOException("Communication with oak9 API unsuccessful. Received error code " + response.code() + "\n");
@@ -135,25 +139,37 @@ public class oak9ApiClient<Int> {
     /**
      * Poll oak9 for validation status
      *
-     * @param result
-     * @return
-     * @throws IOException
-     * @throws InterruptedException
+     * @param result the scan for which we need to check the status
+     * @return the validation result portion of the API response
+     * @throws IOException thrown if the oak9 api request fails
      */
-    public ValidationResult pollStatus(ValidationResult result) throws IOException, InterruptedException {
+    public ValidationResult pollStatus(ValidationResult result) throws IOException {
         return pollStatus(result, 0);
+    }
+
+    /**
+     * Sleep function that handles exceptions thrown by the sleep function
+     *
+     * @param delay an integer expressing the length to sleep in milliseconds
+     * @throws IOException thrown if sleep fails
+     */
+    private void pauseApiRequests(int delay) throws IOException {
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            throw new IOException("Unable to sleep thread");
+        }
     }
 
     /**
      * Poll oak9 for validation status
      *
-     * @param result
-     * @param attempts
-     * @return
-     * @throws IOException
-     * @throws InterruptedException
+     * @param result the scan for which we need to check the status
+     * @param attempts the number of attempts thus far
+     * @return the ValidationResult portion of the API response
+     * @throws IOException thrown in the event of a communication failure with the oak9 API
      */
-    public ValidationResult pollStatus(ValidationResult result, int attempts) throws IOException, InterruptedException {
+    public ValidationResult pollStatus(ValidationResult result, int attempts) throws IOException {
         String credentials = Credentials.basic(this.orgId, this.key);
         Request request = new Request.Builder()
                 .header("Authorization", credentials)
@@ -173,7 +189,7 @@ public class oak9ApiClient<Int> {
 
                         attempts++;
                         jenkinsTaskListener.getLogger().println("Waiting for results (" + attempts + " seconds elapsed)\n");
-                        Thread.sleep(1000);
+                        pauseApiRequests(transientErrorDelayInMs);
                         return pollStatus(result, attempts);
                     case "completed":
                         jenkinsTaskListener.getLogger().println("Scanning completed. Returning results...\n");
@@ -186,7 +202,7 @@ public class oak9ApiClient<Int> {
                 if (response.code() == 503 || response.code() == 504) {
                     attempts++;
                     jenkinsTaskListener.getLogger().println("Received a rate limit or timeout. Pausing 10s before trying again.\n");
-                    Thread.sleep(10000);
+                    pauseApiRequests(transientErrorDelayInMs);
                     return pollStatus(result, attempts);
                 }
                 throw new IOException("API Request Unsuccessful. Received error code: " + response.code() + "\n");

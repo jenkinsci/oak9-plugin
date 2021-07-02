@@ -39,7 +39,7 @@ public class FileArchiver {
     /**
      * Zip files without specifying a base path - may create overly large directory tree in zip
      *
-     * @throws IOException
+     * @throws IOException thrown in the event that the zip file cannot be created
      */
     public void zipFiles() throws IOException {
         zipFiles("");
@@ -48,8 +48,8 @@ public class FileArchiver {
     /**
      * Zip files to ship to oak9
      *
-     * @param base_path
-     * @throws IOException
+     * @param base_path the path from which to start scanning for IaC files
+     * @throws IOException thrown in the event that zip file cannot be created
      */
     public void zipFiles(String base_path) throws IOException {
         FileOutputStream fos = new FileOutputStream(this.basePath + File.separator + this.outputFileName);

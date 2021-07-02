@@ -9,6 +9,7 @@ import java.util.List;
 
 public final class IacExtensionFilter
         implements FileFilter, Serializable, IOFileFilter {
+
     private final List<String> allowedExtensionPatterns = Arrays.asList(".*\\.tf.*", ".*\\.json", ".*\\.yaml");
 
     /**

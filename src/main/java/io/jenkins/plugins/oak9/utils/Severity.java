@@ -18,8 +18,8 @@ public class Severity
     /**
      * Compares a max severity integer with a severity string
      *
-     * @param maxSeverity - the maximum severity allowed
-     * @param currentSeverity - the current severity being evaluated
+     * @param maxSeverity the maximum severity allowed
+     * @param currentSeverity the current severity being evaluated
      * @return boolean to indicate if this passes or fails
      */
     public static boolean exceedsSeverity(int maxSeverity, String currentSeverity) {

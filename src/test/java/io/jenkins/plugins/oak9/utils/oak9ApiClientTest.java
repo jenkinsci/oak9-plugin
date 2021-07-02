@@ -21,19 +21,19 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-class oak9ApiClientTest<Int> {
+class oak9ApiClientTest {
 
     @Mock
     private TaskListener mockJenkinsTaskListener;
 
-    private oak9ApiClient<Int> oak9ApiClientUnderTest;
+    private oak9ApiClient oak9ApiClientUnderTest;
 
     private AutoCloseable mockitoCloseable;
 
     @BeforeEach
     void setUp() {
         mockitoCloseable = openMocks(this);
-        oak9ApiClientUnderTest = new oak9ApiClient<>("baseUrl", "key", "orgId", "projectId", mockJenkinsTaskListener);
+        oak9ApiClientUnderTest = mock(oak9ApiClient.class);
     }
 
     @AfterEach
