@@ -25,6 +25,7 @@ point the Jenkins job should fail.
    in the `Secret` field.
 2. In your Jenkinsfile, add a step for the Oak9Builder: `step([$class: 'Oak9Builder', credentialsId: 'oak9-api-key', orgId: "acme-company", projectId: "acme-company-1", maxSeverity: 2])`
 3. A simple, but complete, pipeline description might look like:
+### Declarative Pipeline
 ```
 pipeline {
     agent any
@@ -38,6 +39,16 @@ pipeline {
     }
 }
 ```
+
+### Scripted Pipeline
+```
+node {
+    stage('Build') {
+        step([$class: 'Oak9Builder', credentialsId: 'oak9-api-key', orgId: "acme-company", projectId: "acme-company-1", maxSeverity: 2])
+    }
+}
+```
+
 4. When using the Pipeline configuration, severities are as follows:
    1. 0 - Do not fail in any case.
    1. 1 - Fail for Low and above
