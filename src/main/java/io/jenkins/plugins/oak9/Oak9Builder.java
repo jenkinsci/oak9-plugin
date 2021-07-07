@@ -210,7 +210,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         taskListener.getLogger().print("Sending IaC files to oak9...\n");
         StringCredentials oak9key = getCredentials(run, this.getCredentialsId());
         oak9ApiClient client = new oak9ApiClient(
-                "https://devconsole-api.oak9.cloud/integrations",
+                "https://devapi.oak9.cloud/integrations",
                 oak9key.getSecret().getPlainText(),
                 this.orgId,
                 this.projectId,
