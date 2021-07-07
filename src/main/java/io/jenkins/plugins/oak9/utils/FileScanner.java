@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 public class FileScanner {
 
@@ -19,6 +20,13 @@ public class FileScanner {
      * @throws IllegalArgumentException thrown if the path provided is not a directory
      */
     public static Collection<File> scanForIacFiles(FilePath path, FileFilter filter) throws IOException, IllegalArgumentException {
+
+        try {
+            path.toComputer();
+            List<FilePath> list = path.list(new IacExtensionFilter());
+        } catch (Exception e) {
+            throw new IOException("Could not list path: " + workspace_path);
+        }
 
         // generate a Java path from the Jenkins FilePath object
         File workspace_path = new File(path.toString());
