@@ -24,12 +24,13 @@ public class FileScanner {
         File workspace_path = new File(path.toString());
 
         if (!workspace_path.exists()) {
-            throw new IOException("The specified path does not exist.");
+            throw new IOException("The specified path does not exist: " + workspace_path);
         }
 
         if (!workspace_path.isDirectory()) {
-            throw new IllegalArgumentException("Path must be a directory!");
+            throw new IllegalArgumentException("Path must be a directory.");
         }
+
         String[] extensions = {"tf", "tfvars", "tfstate", "json", "yaml"};
         Collection<File> files = FileUtils.listFiles(workspace_path, extensions , true);
         return files;
