@@ -1,12 +1,16 @@
 package io.jenkins.plugins.oak9.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import hudson.FilePath;
 import hudson.model.TaskListener;
 import io.jenkins.plugins.oak9.model.ApiResponse;
 import io.jenkins.plugins.oak9.model.ValidationResult;
 import okhttp3.*;
-import java.io.File;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 public class oak9ApiClient {
@@ -80,8 +84,8 @@ public class oak9ApiClient {
      * @throws IOException
      * @throws InterruptedException
      */
-    public ValidationResult postFileValidation(File file) throws IOException {
-        return this.postFileValidation(file, 0);
+    public ValidationResult postFileValidation(String fileName, ByteArrayOutputStream file) throws IOException, InterruptedException {
+        return this.postFileValidation(fileName, file, 0);
     }
 
     /**
@@ -91,18 +95,12 @@ public class oak9ApiClient {
      * @return the oak9 validation result
      * @throws IOException thrown if the file is invalid or the oak9 API request fails
      */
-    public ValidationResult postFileValidation(File file, int attempts) throws IOException {
-
-        if (!file.exists()) {
-            throw new IOException("File sent to API POST does not exist.\n");
-        } else {
-            jenkinsTaskListener.getLogger().println("File exists, size is " + file.length());
-        }
-
+    public ValidationResult postFileValidation(String fileName, ByteArrayOutputStream file, int attempts) throws IOException, InterruptedException {
+        InputStream fileContent = new ByteArrayInputStream(file.toByteArray());
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
-                .addFormDataPart("files", file.getName(),
-                        RequestBody.create(file, MediaType.parse("application/zip")))
+                .addFormDataPart("files", fileName,
+                        RequestBodyBuilder.create(fileContent, MediaType.parse("application/zip")))
                 .build();
 
         String credentials = Credentials.basic(this.orgId, this.key);
@@ -129,7 +127,7 @@ public class oak9ApiClient {
 
                     attempts++;
                     pauseApiRequests(transientErrorDelayInMs);
-                    return postFileValidation(file , attempts);
+                    return postFileValidation(fileName, file , attempts);
                 default:
                     throw new IOException("Communication with oak9 API unsuccessful. Received error code " + response.code() + "\n");
             }

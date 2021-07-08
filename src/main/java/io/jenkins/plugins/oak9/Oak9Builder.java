@@ -7,6 +7,7 @@ import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.remoting.VirtualChannel;
 import hudson.util.FormValidation;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
@@ -31,7 +32,6 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import static com.cloudbees.plugins.credentials.domains.URIRequirementBuilder.fromUri;
 import javax.servlet.ServletException;
 import java.io.*;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -168,54 +168,34 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                         @NonNull EnvVars env,
                         @NonNull Launcher launcher,
                         @NonNull TaskListener taskListener
-    ) throws IOException {
-        // get the absolute path to the workspace
-        FilePath absoluteWorkspace;
-        try {
-            absoluteWorkspace = workspace.absolutize();
-        } catch (InterruptedException e) {
-            taskListener.error("Unable to access workspace");
-            run.setResult(Result.FAILURE);
-            throw new IOException();
-        }
+    ) throws IOException, InterruptedException {
 
-        // Find list of IaC files
-        Collection<File> IacFiles;
-        IacFiles = FileScanner.scanForIacFiles(absoluteWorkspace, new IacExtensionFilter());
-
-        if (IacFiles.size() == 0) {
-            taskListener.error("No IaC files could be found!\n");
-            run.setResult(Result.FAILURE);
-            throw new IOException();
-        }
-
-        // Zip Files
+        FilePath zipPath;
         long zipTimestamp = System.currentTimeMillis() / 1000L;
         String zipOutputFile = "oak9-" + zipTimestamp + ".zip";
         taskListener.getLogger().println("Packaging IaC files for oak9...\n");
-        FileArchiver archiver = new FileArchiver(absoluteWorkspace, IacFiles, zipOutputFile);
-        archiver.zipFiles(absoluteWorkspace.toString());
 
-        String zipFilePath = absoluteWorkspace + File.separator + zipOutputFile;
-        File zipFile = new File(zipFilePath);
-        if (!zipFile.exists() || zipFile.length() == 0) {
-            taskListener.error("Unable to generate zip file: " + zipFilePath + ". Aborting.\n");
+        ByteArrayOutputStream zipFile = new ByteArrayOutputStream();
+        workspace.zip(zipFile, new IacExtensionFilter());
+
+        if (zipFile.size() == 0) {
+            taskListener.error("Unable to generate zip file: " + zipOutputFile + ". Aborting.\n");
             run.setResult(Result.FAILURE);
             throw new IOException();
         } else {
-            taskListener.getLogger().println("Zip file generated with size: " + zipFile.length() + "\n");
+            taskListener.getLogger().println("Zip file generated with size: " + zipFile.size() + "\n");
         }
 
         // Make request to oak9 API to push zip file
         taskListener.getLogger().print("Sending IaC files to oak9...\n");
         StringCredentials oak9key = getCredentials(run, this.getCredentialsId());
         oak9ApiClient client = new oak9ApiClient(
-                "https://devconsole-api.oak9.cloud/integrations",
+                "https://devapi.oak9.cloud/integrations",
                 oak9key.getSecret().getPlainText(),
                 this.orgId,
                 this.projectId,
                 taskListener);
-        ValidationResult postFileResult = client.postFileValidation(zipFile);
+        ValidationResult postFileResult = client.postFileValidation(zipOutputFile, zipFile);
 
         // Check status endpoint
         if (!postFileResult.getStatus().toLowerCase().equals("queued") && !postFileResult.getStatus().toLowerCase().equals("completed")) {

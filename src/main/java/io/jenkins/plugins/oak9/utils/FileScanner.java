@@ -21,15 +21,8 @@ public class FileScanner {
      */
     public static Collection<File> scanForIacFiles(FilePath path, FileFilter filter) throws IOException, IllegalArgumentException {
 
-        try {
-            path.toComputer();
-            List<FilePath> list = path.list(new IacExtensionFilter());
-        } catch (Exception e) {
-            throw new IOException("Could not list path: " + workspace_path);
-        }
-
         // generate a Java path from the Jenkins FilePath object
-        File workspace_path = new File(path.toString());
+        File workspace_path = new File(path.getRemote());
 
         if (!workspace_path.exists()) {
             throw new IOException("The specified path does not exist: " + workspace_path);
