@@ -7,7 +7,6 @@ import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.FilePath;
-import hudson.remoting.VirtualChannel;
 import hudson.util.FormValidation;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
@@ -33,6 +32,7 @@ import static com.cloudbees.plugins.credentials.domains.URIRequirementBuilder.fr
 import javax.servlet.ServletException;
 import java.io.*;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import jenkins.tasks.SimpleBuildStep;
@@ -59,12 +59,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
      */
     private int maxSeverity;
 
-    private final Map<String, Integer> designGapViolationCounter = new HashMap<String, Integer>() {{
-        put("critical", 0);
-        put("high", 0);
-        put("moderate", 0);
-        put("low", 0);
-    }};
+    private final Map<String, Integer> designGapViolationCounter;
 
 
     /**
@@ -81,6 +76,12 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         this.projectId = projectId;
         this.credentialsId = credentialsId;
         this.maxSeverity = maxSeverity;
+        this.designGapViolationCounter = new HashMap<String, Integer>() {{
+            put("critical", 0);
+            put("high", 0);
+            put("moderate", 0);
+            put("low", 0);
+        }};
     }
 
     /**
@@ -212,11 +213,22 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         if (maxSeverity > 0) {
             taskListener.getLogger().println("Scanning Design Gaps for severity `" + Severity.getTextForSeverityLevel(maxSeverity) + "` or higher...\n");
             for (DesignGap designGap : statusResult.getDesignGaps()) {
+                int maxFoundSeverity = 0;
                 for (Violation violation : designGap.getViolations()) {
-                    trackViolationCounts(violation);
+                    try {
+                        int currentFoundSeverity = Severity.getIntegerForSeverityText(violation.getSeverity().toLowerCase());
+                        if (currentFoundSeverity > maxFoundSeverity) {
+                            maxFoundSeverity = currentFoundSeverity;
+                        }
+                    } catch (Exception e) {
+                        taskListener.error(e.getMessage());
+                    }
                     if (Severity.exceedsSeverity(this.maxSeverity, violation.getSeverity())) {
                         run.setResult(Result.FAILURE);
                     }
+                }
+                if (maxFoundSeverity > 0) {
+                    trackDesignGapCounts(maxFoundSeverity);
                 }
             }
         }
@@ -238,13 +250,13 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     /**
      * Keeps counts of different severity violations from an Oak9 scan result
      *
-     * @param violation the Violation object from which we are analyzing the severity
+     * @param severityLevel the Violation object from which we are analyzing the severity
      */
-    private void trackViolationCounts(Violation violation) {
-        String severityKey = violation.getSeverity().toLowerCase();
+    private void trackDesignGapCounts(int severityLevel) {
+        String key = Severity.getTextForSeverityLevel(severityLevel).toLowerCase();
         designGapViolationCounter.replace(
-                severityKey,
-                designGapViolationCounter.get(severityKey) + 1
+                key,
+                designGapViolationCounter.get(key) + 1
         );
     }
 
