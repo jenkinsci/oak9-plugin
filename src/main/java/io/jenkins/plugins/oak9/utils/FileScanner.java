@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 public class FileScanner {
 
@@ -21,7 +22,7 @@ public class FileScanner {
     public static Collection<File> scanForIacFiles(FilePath path, FileFilter filter) throws IOException, IllegalArgumentException {
 
         // generate a Java path from the Jenkins FilePath object
-        File workspace_path = new File(path.toString());
+        File workspace_path = new File(path.getRemote());
 
         if (!workspace_path.exists()) {
             throw new IOException("The specified path does not exist: " + workspace_path);

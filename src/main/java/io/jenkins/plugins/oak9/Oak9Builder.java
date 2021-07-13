@@ -31,8 +31,8 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import static com.cloudbees.plugins.credentials.domains.URIRequirementBuilder.fromUri;
 import javax.servlet.ServletException;
 import java.io.*;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import jenkins.tasks.SimpleBuildStep;
@@ -59,12 +59,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
      */
     private int maxSeverity;
 
-    private final Map<String, Integer> designGapViolationCounter = new HashMap<String, Integer>() {{
-        put("critical", 0);
-        put("high", 0);
-        put("moderate", 0);
-        put("low", 0);
-    }};
+    private final Map<String, Integer> designGapViolationCounter;
 
 
     /**
@@ -81,6 +76,12 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         this.projectId = projectId;
         this.credentialsId = credentialsId;
         this.maxSeverity = maxSeverity;
+        this.designGapViolationCounter = new HashMap<String, Integer>() {{
+            put("critical", 0);
+            put("high", 0);
+            put("moderate", 0);
+            put("low", 0);
+        }};
     }
 
     /**
@@ -168,42 +169,22 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                         @NonNull EnvVars env,
                         @NonNull Launcher launcher,
                         @NonNull TaskListener taskListener
-    ) throws IOException {
-        // get the absolute path to the workspace
-        FilePath absoluteWorkspace;
-        try {
-            absoluteWorkspace = workspace.absolutize();
-        } catch (InterruptedException e) {
-            taskListener.error("Unable to access workspace");
-            run.setResult(Result.FAILURE);
-            throw new IOException();
-        }
+    ) throws IOException, InterruptedException {
 
-        // Find list of IaC files
-        Collection<File> IacFiles;
-        IacFiles = FileScanner.scanForIacFiles(absoluteWorkspace, new IacExtensionFilter());
-
-        if (IacFiles.size() == 0) {
-            taskListener.error("No IaC files could be found!\n");
-            run.setResult(Result.FAILURE);
-            throw new IOException();
-        }
-
-        // Zip Files
+        FilePath zipPath;
         long zipTimestamp = System.currentTimeMillis() / 1000L;
         String zipOutputFile = "oak9-" + zipTimestamp + ".zip";
         taskListener.getLogger().println("Packaging IaC files for oak9...\n");
-        FileArchiver archiver = new FileArchiver(absoluteWorkspace, IacFiles, zipOutputFile);
-        archiver.zipFiles(absoluteWorkspace.toString());
 
-        String zipFilePath = absoluteWorkspace + File.separator + zipOutputFile;
-        File zipFile = new File(zipFilePath);
-        if (!zipFile.exists() || zipFile.length() == 0) {
-            taskListener.error("Unable to generate zip file: " + zipFilePath + ". Aborting.\n");
+        ByteArrayOutputStream zipFile = new ByteArrayOutputStream();
+        workspace.zip(zipFile, new IacExtensionFilter());
+
+        if (zipFile.size() == 0) {
+            taskListener.error("Unable to generate zip file: " + zipOutputFile + ". Aborting.\n");
             run.setResult(Result.FAILURE);
             throw new IOException();
         } else {
-            taskListener.getLogger().println("Zip file generated with size: " + zipFile.length() + "\n");
+            taskListener.getLogger().println("Zip file generated with size: " + zipFile.size() + "\n");
         }
 
         // Make request to oak9 API to push zip file
@@ -215,7 +196,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                 this.orgId,
                 this.projectId,
                 taskListener);
-        ValidationResult postFileResult = client.postFileValidation(zipFile);
+        ValidationResult postFileResult = client.postFileValidation(zipOutputFile, zipFile);
 
         // Check status endpoint
         if (!postFileResult.getStatus().toLowerCase().equals("queued") && !postFileResult.getStatus().toLowerCase().equals("completed")) {
@@ -232,11 +213,22 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         if (maxSeverity > 0) {
             taskListener.getLogger().println("Scanning Design Gaps for severity `" + Severity.getTextForSeverityLevel(maxSeverity) + "` or higher...\n");
             for (DesignGap designGap : statusResult.getDesignGaps()) {
+                int maxFoundSeverity = 0;
                 for (Violation violation : designGap.getViolations()) {
-                    trackViolationCounts(violation);
+                    try {
+                        int currentFoundSeverity = Severity.getIntegerForSeverityText(violation.getSeverity().toLowerCase());
+                        if (currentFoundSeverity > maxFoundSeverity) {
+                            maxFoundSeverity = currentFoundSeverity;
+                        }
+                    } catch (Exception e) {
+                        taskListener.error(e.getMessage());
+                    }
                     if (Severity.exceedsSeverity(this.maxSeverity, violation.getSeverity())) {
                         run.setResult(Result.FAILURE);
                     }
+                }
+                if (maxFoundSeverity > 0) {
+                    trackDesignGapCounts(maxFoundSeverity);
                 }
             }
         }
@@ -258,13 +250,13 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     /**
      * Keeps counts of different severity violations from an Oak9 scan result
      *
-     * @param violation the Violation object from which we are analyzing the severity
+     * @param severityLevel the Violation object from which we are analyzing the severity
      */
-    private void trackViolationCounts(Violation violation) {
-        String severityKey = violation.getSeverity().toLowerCase();
+    private void trackDesignGapCounts(int severityLevel) {
+        String key = Severity.getTextForSeverityLevel(severityLevel).toLowerCase();
         designGapViolationCounter.replace(
-                severityKey,
-                designGapViolationCounter.get(severityKey) + 1
+                key,
+                designGapViolationCounter.get(key) + 1
         );
     }
 

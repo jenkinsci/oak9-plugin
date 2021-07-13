@@ -1,5 +1,6 @@
 package io.jenkins.plugins.oak9.utils;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -25,6 +26,19 @@ public class Severity
      */
     public static boolean exceedsSeverity(int maxSeverity, String currentSeverity) {
         return Severity.severities.get(currentSeverity.trim().toLowerCase()) >= maxSeverity;
+    }
+
+    /**
+     * Fetches the integer value of a given severity
+     *
+     * @param severityText the severity text provided
+     * @return
+     */
+    public static int getIntegerForSeverityText(String severityText) throws IOException {
+        if (Severity.severities.containsKey(severityText)) {
+            return Severity.severities.get(severityText);
+        }
+        throw new IOException("Unknown severity provided");
     }
 
     public static String getTextForSeverityLevel(int value) {
