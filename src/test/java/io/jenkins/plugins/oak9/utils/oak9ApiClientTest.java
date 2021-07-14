@@ -1,6 +1,7 @@
 package io.jenkins.plugins.oak9.utils;
 
 import hudson.model.TaskListener;
+import io.jenkins.plugins.oak9.model.ApiResponse;
 import io.jenkins.plugins.oak9.model.DesignGap;
 import io.jenkins.plugins.oak9.model.ResultRef;
 import io.jenkins.plugins.oak9.model.ValidationResult;
@@ -111,7 +112,7 @@ class oak9ApiClientTest {
         when(mockJenkinsTaskListener.getLogger()).thenReturn(spyPrintStream);
 
         // Run the test
-        final ValidationResult result2 = oak9ApiClientUnderTest.pollStatus(result);
+        final ApiResponse result2 = oak9ApiClientUnderTest.pollStatus(result);
 
         // Verify the results
         verify(spyPrintStream).close();
@@ -141,7 +142,7 @@ class oak9ApiClientTest {
         when(mockJenkinsTaskListener.getLogger()).thenReturn(spyPrintStream);
 
         // Run the test
-        final ValidationResult result2 = oak9ApiClientUnderTest.pollStatus(result, 0);
+        final ApiResponse result2 = oak9ApiClientUnderTest.pollStatus(result, 0);
 
         // Verify the results
         verify(spyPrintStream).close();

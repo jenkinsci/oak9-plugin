@@ -1,7 +1,6 @@
 package io.jenkins.plugins.oak9.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hudson.FilePath;
 import hudson.model.TaskListener;
 import io.jenkins.plugins.oak9.model.ApiResponse;
 import io.jenkins.plugins.oak9.model.ValidationResult;
@@ -141,7 +140,7 @@ public class oak9ApiClient {
      * @return the validation result portion of the API response
      * @throws IOException thrown if the oak9 api request fails
      */
-    public ValidationResult pollStatus(ValidationResult result) throws IOException {
+    public ApiResponse pollStatus(ValidationResult result) throws IOException {
         return pollStatus(result, 0);
     }
 
@@ -167,7 +166,7 @@ public class oak9ApiClient {
      * @return the ValidationResult portion of the API response
      * @throws IOException thrown in the event of a communication failure with the oak9 API
      */
-    public ValidationResult pollStatus(ValidationResult result, int attempts) throws IOException {
+    public ApiResponse pollStatus(ValidationResult result, int attempts) throws IOException {
         String credentials = Credentials.basic(this.orgId, this.key);
         Request request = new Request.Builder()
                 .header("Authorization", credentials)
@@ -191,7 +190,7 @@ public class oak9ApiClient {
                         return pollStatus(result, attempts);
                     case "completed":
                         jenkinsTaskListener.getLogger().println("Scanning completed. Returning results...\n");
-                        return apiResponse.getResult();
+                        return apiResponse;
                     default:
                         throw new IOException("Unexpected task status: " + apiResponse.getStatus() + ".\n");
                 }

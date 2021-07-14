@@ -16,6 +16,7 @@ import hudson.tasks.Builder;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.util.ListBoxModel;
 import hudson.security.ACL;
+import io.jenkins.plugins.oak9.model.ApiResponse;
 import io.jenkins.plugins.oak9.model.DesignGap;
 import io.jenkins.plugins.oak9.model.ValidationResult;
 import io.jenkins.plugins.oak9.model.Violation;
@@ -31,8 +32,10 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import static com.cloudbees.plugins.credentials.domains.URIRequirementBuilder.fromUri;
 import javax.servlet.ServletException;
 import java.io.*;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.Locale;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import jenkins.tasks.SimpleBuildStep;
@@ -171,7 +174,6 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                         @NonNull TaskListener taskListener
     ) throws IOException, InterruptedException {
 
-        FilePath zipPath;
         long zipTimestamp = System.currentTimeMillis() / 1000L;
         String zipOutputFile = "oak9-" + zipTimestamp + ".zip";
         taskListener.getLogger().println("Packaging IaC files for oak9...\n");
@@ -206,7 +208,8 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         }
         taskListener.getLogger().print("Files in status: " + postFileResult.getStatus() + " with requestId: " + postFileResult.getRequestId() + "\n");
         taskListener.getLogger().print("Waiting for oak9 analysis for Request ID " + postFileResult.getRequestId() + "...\n");
-        ValidationResult statusResult = client.pollStatus(postFileResult);
+        ApiResponse apiResponse = client.pollStatus(postFileResult);
+        ValidationResult statusResult = apiResponse.getResult();
 
         // Analyze Results
         taskListener.getLogger().print("Analyzing oak9 scan results for Request ID " + statusResult.getRequestId() + "...\n");
@@ -240,6 +243,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                             "High " + designGapViolationCounter.get("high") + "; " +
                             "Moderate " + designGapViolationCounter.get("moderate") + "; " +
                             "Low " + designGapViolationCounter.get("low"));
+            taskListener.getLogger().println("For more details, browse to " + apiResponse.getResultsUrl());
             taskListener.getLogger().println("oak9 Runner Failed. Stopping Build Progress.\n");
         } else {
             run.setResult(Result.SUCCESS);
@@ -325,8 +329,12 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
          * @return ListBoxModel
          */
         public ListBoxModel doFillMaxSeverityItems() {
+            // Sort items by severity (descending).
+            List<Map.Entry<String, Integer>> list = new LinkedList<Map.Entry<String, Integer>>(Severity.severities.entrySet());
+            Collections.sort(list, (i1, i2) -> i2.getValue().compareTo(i1.getValue()));
+
             ListBoxModel items = new ListBoxModel();
-            for (Map.Entry<String,Integer> severity : Severity.severities.entrySet()) {
+            for (Map.Entry<String,Integer> severity : list) {
                 items.add(WordUtils.capitalize(severity.getKey()), severity.getValue().toString());
             }
             return items;
