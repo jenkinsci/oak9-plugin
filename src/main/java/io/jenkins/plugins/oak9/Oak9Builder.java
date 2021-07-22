@@ -7,6 +7,7 @@ import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.remoting.VirtualChannel;
 import hudson.util.FormValidation;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 
 import jenkins.tasks.SimpleBuildStep;
+import org.w3c.dom.Document;
 
 public class Oak9Builder extends Builder implements SimpleBuildStep {
 
@@ -64,6 +66,10 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
 
     private final Map<String, Integer> designGapViolationCounter;
 
+    /**
+     * Base URL to use for oak9 API
+     */
+    private String baseUrl;
 
     /**
      * Constructor is setup by Jenkins when it instantiates the plugin
@@ -74,7 +80,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
      * @param maxSeverity the severity at which the job will fail (at or above)
      */
     @DataBoundConstructor
-    public Oak9Builder(String orgId, String projectId, String credentialsId, int maxSeverity) {
+    public Oak9Builder(String orgId, String projectId, String credentialsId, int maxSeverity, String baseUrl) {
         this.orgId = orgId;
         this.projectId = projectId;
         this.credentialsId = credentialsId;
@@ -85,6 +91,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
             put("moderate", 0);
             put("low", 0);
         }};
+        this.baseUrl = baseUrl;
     }
 
     /**
@@ -121,6 +128,23 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     @DataBoundSetter
     public void setMaxSeverity(int maxSeverity) {
         this.maxSeverity = maxSeverity;
+    }
+
+    /**
+     * Sets the BaseURL for communication with the oak9 API
+     * @param baseUrl the base URL to use
+     */
+    @DataBoundSetter
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+
+    /**
+     * Returns the current base URL
+     * @return
+     */
+    public String getBaseUrl() {
+        return this.baseUrl;
     }
 
     /**
@@ -193,7 +217,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         taskListener.getLogger().print("Sending IaC files to oak9...\n");
         StringCredentials oak9key = getCredentials(run, this.getCredentialsId());
         oak9ApiClient client = new oak9ApiClient(
-                "https://devapi.oak9.cloud/integrations",
+                this.baseUrl,
                 oak9key.getSecret().getPlainText(),
                 this.orgId,
                 this.projectId,
@@ -213,8 +237,8 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
 
         // Analyze Results
         taskListener.getLogger().print("Analyzing oak9 scan results for Request ID " + statusResult.getRequestId() + "...\n");
-        if (maxSeverity > 0) {
-            taskListener.getLogger().println("Scanning Design Gaps for severity `" + Severity.getTextForSeverityLevel(maxSeverity) + "` or higher...\n");
+        taskListener.getLogger().println("Scanning Design Gaps for severity `" + Severity.getTextForSeverityLevel(maxSeverity) + "` or higher...\n");
+        if (statusResult.getDesignGaps().size() > 0) {
             for (DesignGap designGap : statusResult.getDesignGaps()) {
                 int maxFoundSeverity = 0;
                 for (Violation violation : designGap.getViolations()) {
@@ -233,6 +257,21 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                 if (maxFoundSeverity > 0) {
                     trackDesignGapCounts(maxFoundSeverity);
                 }
+            }
+
+            taskListener.getLogger().print("Writing Design Gaps to artifacts/design_gaps.xml\n");
+            try {
+                String designGapXmlDocument = ArtifactGenerator.generateDesignGapXmlDocument(statusResult.getDesignGaps());
+                FilePath xmlOutputPath;
+                if (workspace.isRemote()) {
+                    VirtualChannel ch = workspace.getChannel();
+                    xmlOutputPath = new FilePath(ch, workspace.getRemote() + "/artifacts/design_gaps.xml");
+                } else {
+                    xmlOutputPath = new FilePath(new File(workspace.getRemote() + "/artifacts/design_gaps.xml"));
+                }
+                xmlOutputPath.write(designGapXmlDocument, "utf-8");
+            } catch (Exception e) {
+                taskListener.error(e.getMessage());
             }
         }
 
@@ -290,6 +329,21 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                 throws IOException, ServletException {
             if (value.length() == 0)
                 return FormValidation.error(Messages.Oak9Builder_DescriptorImpl_errors_missingOrgId());
+            return FormValidation.ok();
+        }
+
+        /**
+         * Check to make sure the user has not unset the BaseURL
+         *
+         * @param value the string value of the input being checked
+         * @return FormValidation
+         * @throws IOException thrown by the Jenkins core
+         * @throws ServletException thrown by the Jenkins core
+         */
+        public FormValidation doCheckBaseUrl(@QueryParameter String value)
+                throws IOException, ServletException {
+            if (value.length() == 0)
+                return FormValidation.error(Messages.Oak9Builder_DescriptorImpl_errors_missingBaseUrl());
             return FormValidation.ok();
         }
 
@@ -372,6 +426,10 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         @Override
         public String getDisplayName() {
             return Messages.Oak9Builder_DescriptorImpl_DisplayName();
+        }
+
+        public String defaultBaseUrl() {
+            return "https://api.oak9.io/integrations";
         }
 
     }

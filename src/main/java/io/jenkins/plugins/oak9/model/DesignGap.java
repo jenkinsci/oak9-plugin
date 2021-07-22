@@ -39,13 +39,13 @@ public class DesignGap {
     @JsonProperty("source")
     private String source;
     @JsonProperty("resourceName")
-    private Object resourceName;
+    private String resourceName;
     @JsonProperty("resourceId")
-    private Object resourceId;
+    private String resourceId;
     @JsonProperty("resourceType")
     private String resourceType;
     @JsonProperty("oak9Guidance")
-    private Object oak9Guidance;
+    private String oak9Guidance;
     @JsonProperty("violations")
     private List<Violation> violations = null;
     @JsonIgnore
@@ -69,7 +69,7 @@ public class DesignGap {
      * @param oak9Guidance
      * @param resourceType
      */
-    public DesignGap(String requirementId, String requirementName, String source, Object resourceName, Object resourceId, String resourceType, Object oak9Guidance, List<Violation> violations) {
+    public DesignGap(String requirementId, String requirementName, String source, String resourceName, String resourceId, String resourceType, String oak9Guidance, List<Violation> violations) {
         super();
         this.requirementId = requirementId;
         this.requirementName = requirementName;
@@ -112,22 +112,22 @@ public class DesignGap {
     }
 
     @JsonProperty("resourceName")
-    public Object getResourceName() {
+    public String getResourceName() {
         return resourceName;
     }
 
     @JsonProperty("resourceName")
-    public void setResourceName(Object resourceName) {
+    public void setResourceName(String resourceName) {
         this.resourceName = resourceName;
     }
 
     @JsonProperty("resourceId")
-    public Object getResourceId() {
+    public String getResourceId() {
         return resourceId;
     }
 
     @JsonProperty("resourceId")
-    public void setResourceId(Object resourceId) {
+    public void setResourceId(String resourceId) {
         this.resourceId = resourceId;
     }
 
@@ -142,12 +142,12 @@ public class DesignGap {
     }
 
     @JsonProperty("oak9Guidance")
-    public Object getOak9Guidance() {
+    public String getOak9Guidance() {
         return oak9Guidance;
     }
 
     @JsonProperty("oak9Guidance")
-    public void setOak9Guidance(Object oak9Guidance) {
+    public void setOak9Guidance(String oak9Guidance) {
         this.oak9Guidance = oak9Guidance;
     }
 

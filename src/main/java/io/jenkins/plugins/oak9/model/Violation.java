@@ -34,7 +34,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class Violation {
 
     @JsonProperty("policyId")
-    private Object policyId;
+    private String policyId;
     @JsonProperty("requirementId")
     private String requirementId;
     @JsonProperty("requirementName")
@@ -44,7 +44,7 @@ public class Violation {
     @JsonProperty("attributeValue")
     private String attributeValue;
     @JsonProperty("oak9RecommendedValue")
-    private Object oak9RecommendedValue;
+    private String oak9RecommendedValue;
     @JsonProperty("errorMessage")
     private String errorMessage;
     @JsonProperty("severity")
@@ -76,7 +76,7 @@ public class Violation {
      * @param attributeKey
      * @param requirementId
      */
-    public Violation(Object policyId, String requirementId, String requirementName, String attributeKey, String attributeValue, Object oak9RecommendedValue, String errorMessage, String severity, String oak9Severity, String documentation) {
+    public Violation(String policyId, String requirementId, String requirementName, String attributeKey, String attributeValue, String oak9RecommendedValue, String errorMessage, String severity, String oak9Severity, String documentation) {
         super();
         this.policyId = policyId;
         this.requirementId = requirementId;
@@ -91,12 +91,12 @@ public class Violation {
     }
 
     @JsonProperty("policyId")
-    public Object getPolicyId() {
+    public String getPolicyId() {
         return policyId;
     }
 
     @JsonProperty("policyId")
-    public void setPolicyId(Object policyId) {
+    public void setPolicyId(String policyId) {
         this.policyId = policyId;
     }
 
@@ -141,12 +141,12 @@ public class Violation {
     }
 
     @JsonProperty("oak9RecommendedValue")
-    public Object getOak9RecommendedValue() {
+    public String getOak9RecommendedValue() {
         return oak9RecommendedValue;
     }
 
     @JsonProperty("oak9RecommendedValue")
-    public void setOak9RecommendedValue(Object oak9RecommendedValue) {
+    public void setOak9RecommendedValue(String oak9RecommendedValue) {
         this.oak9RecommendedValue = oak9RecommendedValue;
     }
 
