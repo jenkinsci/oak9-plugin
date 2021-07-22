@@ -93,19 +93,11 @@ public class ArtifactGenerator
     private static String convertDocumentToString(Document xmlDocument) throws TransformerException {
         TransformerFactory tf = TransformerFactory.newInstance();
         Transformer transformer = tf.newTransformer();
-
-        // Uncomment if you do not require XML declaration
-        // transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-
-        //A character stream that collects its output in a string buffer,
-        //which can then be used to construct a string.
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
         StringWriter writer = new StringWriter();
-
-        //transform document to string
         transformer.transform(new DOMSource(xmlDocument), new StreamResult(writer));
-
-        String xmlString = writer.getBuffer().toString();
-        return xmlString;
+        return writer.getBuffer().toString();
     }
 
 }
