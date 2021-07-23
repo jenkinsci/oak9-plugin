@@ -64,8 +64,6 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
      */
     private int maxSeverity;
 
-    private final Map<String, Integer> designGapViolationCounter;
-
     /**
      * Base URL to use for oak9 API
      */
@@ -85,12 +83,6 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         this.projectId = projectId;
         this.credentialsId = credentialsId;
         this.maxSeverity = maxSeverity;
-        this.designGapViolationCounter = new HashMap<String, Integer>() {{
-            put("critical", 0);
-            put("high", 0);
-            put("moderate", 0);
-            put("low", 0);
-        }};
         this.baseUrl = baseUrl;
     }
 
@@ -222,8 +214,15 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                 this.orgId,
                 this.projectId,
                 taskListener);
-        ValidationResult postFileResult = client.postFileValidation(zipOutputFile, zipFile);
 
+        ValidationResult postFileResult;
+        try {
+            postFileResult = client.postFileValidation(zipOutputFile, zipFile);
+        } catch (Exception e) {
+            taskListener.error(e.getMessage());
+            run.setResult(Result.FAILURE);
+            return;
+        }
         // Check status endpoint
         if (!postFileResult.getStatus().toLowerCase().equals("queued") && !postFileResult.getStatus().toLowerCase().equals("completed")) {
             taskListener.error("Unexpected status: " + postFileResult.getStatus() + " from oak9 API");
@@ -232,12 +231,22 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         }
         taskListener.getLogger().print("Files in status: " + postFileResult.getStatus() + " with requestId: " + postFileResult.getRequestId() + "\n");
         taskListener.getLogger().print("Waiting for oak9 analysis for Request ID " + postFileResult.getRequestId() + "...\n");
-        ApiResponse apiResponse = client.pollStatus(postFileResult);
-        ValidationResult statusResult = apiResponse.getResult();
+
+        ApiResponse apiResponse;
+        ValidationResult statusResult;
+        try {
+            apiResponse = client.pollStatus(postFileResult);
+            statusResult = apiResponse.getResult();
+        } catch (Exception e) {
+            taskListener.error(e.getMessage());
+            run.setResult(Result.FAILURE);
+            return;
+        }
 
         // Analyze Results
         taskListener.getLogger().print("Analyzing oak9 scan results for Request ID " + statusResult.getRequestId() + "...\n");
         taskListener.getLogger().println("Scanning Design Gaps for severity `" + Severity.getTextForSeverityLevel(maxSeverity) + "` or higher...\n");
+        DesignGapCounter designGapCounter = new DesignGapCounter();
         if (statusResult.getDesignGaps().size() > 0) {
             for (DesignGap designGap : statusResult.getDesignGaps()) {
                 int maxFoundSeverity = 0;
@@ -255,7 +264,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                     }
                 }
                 if (maxFoundSeverity > 0) {
-                    trackDesignGapCounts(maxFoundSeverity);
+                    designGapCounter.trackDesignGapCounts(maxFoundSeverity);
                 }
             }
 
@@ -278,29 +287,16 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         if (run.getResult() == Result.FAILURE) {
             taskListener.error(
                     "Design Gap(s) found: " +
-                            "Critical " + designGapViolationCounter.get("critical") + "; " +
-                            "High " + designGapViolationCounter.get("high") + "; " +
-                            "Moderate " + designGapViolationCounter.get("moderate") + "; " +
-                            "Low " + designGapViolationCounter.get("low"));
+                            "Critical " + designGapCounter.getCountForSeverity("critical") + "; " +
+                            "High " + designGapCounter.getCountForSeverity("high") + "; " +
+                            "Moderate " + designGapCounter.getCountForSeverity("moderate") + "; " +
+                            "Low " + designGapCounter.getCountForSeverity("low"));
             taskListener.getLogger().println("For more details, browse to " + apiResponse.getResultsUrl());
             taskListener.getLogger().println("oak9 Runner Failed. Stopping Build Progress.\n");
         } else {
             run.setResult(Result.SUCCESS);
             taskListener.getLogger().println("oak9 Runner Complete\n");
         }
-    }
-
-    /**
-     * Keeps counts of different severity violations from an Oak9 scan result
-     *
-     * @param severityLevel the Violation object from which we are analyzing the severity
-     */
-    private void trackDesignGapCounts(int severityLevel) {
-        String key = Severity.getTextForSeverityLevel(severityLevel).toLowerCase();
-        designGapViolationCounter.replace(
-                key,
-                designGapViolationCounter.get(key) + 1
-        );
     }
 
     /**
