@@ -12,17 +12,51 @@ import java.io.InputStream;
 
 public class RequestBodyBuilder {
 
-    public static RequestBody create(final InputStream inputStream, final MediaType mediaType) {
-        return new RequestBody() {
+    private InputStream inputStream;
+    private MediaType mediaType;
+    private RequestBody requestBody;
+
+    public RequestBodyBuilder(InputStream inputStream, MediaType mediaType) {
+        this.inputStream = inputStream;
+        this.mediaType = mediaType;
+    }
+
+    public InputStream getInputStream() {
+        return inputStream;
+    }
+
+    public void setInputStream(InputStream inputStream) {
+        this.inputStream = inputStream;
+    }
+
+    public MediaType getMediaType() {
+        return mediaType;
+    }
+
+    public void setMediaType(MediaType mediaType) {
+        this.mediaType = mediaType;
+    }
+
+    public RequestBody getRequestBody() {
+        return requestBody;
+    }
+
+    public void setRequestBody(RequestBody requestBody) {
+        this.requestBody = requestBody;
+    }
+
+    public RequestBodyBuilder create() {
+
+        RequestBody requestBody = new RequestBody() {
             @Override
             public MediaType contentType() {
-                return mediaType;
+                return getMediaType();
             }
 
             @Override
             public long contentLength() {
                 try {
-                    return inputStream.available();
+                    return getInputStream().available();
                 } catch (IOException e) {
                     return 0;
                 }
@@ -39,5 +73,8 @@ public class RequestBodyBuilder {
                 }
             }
         };
+        return this;
     }
+
+
 }

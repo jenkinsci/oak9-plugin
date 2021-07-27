@@ -1,40 +1,36 @@
 package io.jenkins.plugins.oak9.utils;
 
-import hudson.FilePath;
-import org.junit.jupiter.api.Test;
-
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
-class FileScannerTest {
+import hudson.FilePath;
 
+import java.io.FileFilter;
+import java.io.IOException;
+import java.nio.file.Paths;
+
+import org.junit.jupiter.api.Test;
+
+public class FileScannerTest {
     @Test
-    void testScanForIacFiles() throws Exception {
-        // Setup
-        final FilePath path = new FilePath(new File("filename.txt"));
-        final FileFilter filter = null;
-        final Collection<File> expectedResult = Arrays.asList(new File("filename.txt"));
-
-        // Run the test
-        //final Collection<File> result = FileScanner.scanForIacFiles(path, filter);
-
-        // Verify the results
-        //assertEquals(expectedResult, result);
-    }
-
-    @Test
-    void testScanForIacFiles_ThrowsIOException() {
-        // Setup
-        final FilePath path = new FilePath(new File("filename.txt"));
-        final FileFilter filter = null;
-
-        // Run the test
-        //assertThrows(IOException.class, () -> FileScanner.scanForIacFiles(path, filter));
+    public void testScanForIacFiles() throws IOException, IllegalArgumentException {
+        assertThrows(IOException.class,
+                () -> FileScanner.scanForIacFiles(
+                        new FilePath(Paths.get(System.getProperty("java.io.tmpdir"), "test.txt").toFile()),
+                        mock(FileFilter.class)));
+        assertEquals(0,
+                FileScanner
+                        .scanForIacFiles(new FilePath(Paths.get(System.getProperty("java.io.tmpdir"), "").toFile()),
+                                mock(FileFilter.class))
+                        .size());
+        assertEquals(0,
+                FileScanner
+                        .scanForIacFiles(new FilePath(Paths.get(System.getProperty("java.io.tmpdir")).toFile()),
+                                mock(FileFilter.class))
+                        .size());
+        assertThrows(IOException.class, () -> FileScanner
+                .scanForIacFiles(new FilePath(Paths.get(System.getProperty("tf"), "").toFile()), mock(FileFilter.class)));
     }
 }
+

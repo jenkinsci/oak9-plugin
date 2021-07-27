@@ -63,16 +63,20 @@ public class oak9ApiClient {
      * @param projectId
      * @param jenkinsTaskListener
      */
-    public oak9ApiClient(String baseUrl, String key, String orgId, String projectId, TaskListener jenkinsTaskListener) {
+    public oak9ApiClient(
+            String baseUrl,
+            String key,
+            String orgId,
+            String projectId,
+            TaskListener jenkinsTaskListener,
+            OkHttpClient httpClient
+    ) {
         this.baseUrl = baseUrl;
         this.key = key;
         this.orgId = orgId;
         this.projectId = projectId;
         this.jenkinsTaskListener = jenkinsTaskListener;
-        this.client = new OkHttpClient.Builder()
-                .connectTimeout(5, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build();
+        this.client = httpClient;
     }
 
     /**
@@ -99,7 +103,7 @@ public class oak9ApiClient {
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("files", fileName,
-                        RequestBodyBuilder.create(fileContent, MediaType.parse("application/zip")))
+                        new RequestBodyBuilder(fileContent, MediaType.parse("application/zip")).create().getRequestBody())
                 .build();
 
         String credentials = Credentials.basic(this.orgId, this.key);
