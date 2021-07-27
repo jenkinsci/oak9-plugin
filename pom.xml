@@ -20,7 +20,7 @@
         <java.level>8</java.level>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
     </properties>
-    <name>Oak9 Plugin</name>
+    <name>oak9</name>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
     <dependencyManagement>
         <dependencies>
@@ -133,14 +133,6 @@
             <url>https://opensource.org/licenses/MIT</url>
         </license>
     </licenses>
-    <!-- If you want this to appear on the plugin site page:
-    <developers>
-      <developer>
-        <id>bhacker</id>
-        <name>Bob Q. Hacker</name>
-        <email>bhacker@nowhere.net</email>
-      </developer>
-    </developers> -->
 
     <scm>
         <connection>scm:git:git://github.com/${gitHubRepo}.git</connection>

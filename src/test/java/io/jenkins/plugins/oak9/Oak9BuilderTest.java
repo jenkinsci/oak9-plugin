@@ -25,7 +25,7 @@ class Oak9BuilderTest {
 
     @BeforeEach
     void setUp() {
-        oak9BuilderUnderTest = new Oak9Builder("acorncorp", "proj-acorncorp-15", "oak9-api-key", 2);
+        oak9BuilderUnderTest = new Oak9Builder("acorncorp", "proj-acorncorp-15", "oak9-api-key", 2, "1234");
     }
 
     @Test
