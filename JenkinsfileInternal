@@ -1,0 +1,12 @@
+#!/usr/bin/env groovy
+
+node {
+    try {
+        stage('Build') {
+            sh 'echo "Building Plugin"'
+            sh 'mvn install'
+        }
+    } finally {
+              archiveArtifacts artifacts: 'target/oak9.jar','target/oak9.hpi', fingerprint: true
+    }
+}
