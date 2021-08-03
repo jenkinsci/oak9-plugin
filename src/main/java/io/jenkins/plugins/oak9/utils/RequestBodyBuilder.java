@@ -47,7 +47,7 @@ public class RequestBodyBuilder {
 
     public RequestBodyBuilder create() {
 
-        RequestBody requestBody = new RequestBody() {
+         setRequestBody(new RequestBody() {
             @Override
             public MediaType contentType() {
                 return getMediaType();
@@ -69,10 +69,12 @@ public class RequestBodyBuilder {
                     source = Okio.source(inputStream);
                     sink.writeAll(source);
                 } finally {
-                    Util.closeQuietly(source);
+                    if (source != null) {
+                        Util.closeQuietly(source);
+                    }
                 }
             }
-        };
+        });
         return this;
     }
 

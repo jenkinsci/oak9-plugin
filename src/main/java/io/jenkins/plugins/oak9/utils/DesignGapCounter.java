@@ -9,7 +9,7 @@ public class DesignGapCounter {
 
     public DesignGapCounter() {
         Map<String, Integer> newCounter = new HashMap<String, Integer>();
-        for(Map.Entry<String, Integer> severity : Severity.severities.entrySet()) {
+        for(Map.Entry<String, Integer> severity : Severity.getSeverities().entrySet()) {
             String key = severity.getKey();
             newCounter.put(key, 0);
         }

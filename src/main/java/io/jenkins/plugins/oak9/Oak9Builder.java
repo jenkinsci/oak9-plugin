@@ -180,8 +180,8 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
      * @param taskListener the Jenkins task listener for logging
      * @return a ready-to-use http client
      */
-    public oak9ApiClient generateHttpClient(Run<?, ?> run, TaskListener taskListener) {
-        return new  oak9ApiClient(
+    public Oak9ApiClient generateHttpClient(Run<?, ?> run, TaskListener taskListener) {
+        return new Oak9ApiClient(
                 this.baseUrl,
                 getCredentials(run, this.getCredentialsId()).getSecret().getPlainText(),
                 this.orgId,
@@ -227,7 +227,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
 
         // Make request to oak9 API to push zip file
         taskListener.getLogger().print("Sending IaC files to oak9...\n");
-        oak9ApiClient client = generateHttpClient(run, taskListener);
+        Oak9ApiClient client = generateHttpClient(run, taskListener);
         ValidationResult postFileResult;
         try {
             postFileResult = client.postFileValidation(zipOutputFile, zipFile);
@@ -394,7 +394,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
          */
         public ListBoxModel doFillMaxSeverityItems() {
             // Sort items by severity (descending).
-            List<Map.Entry<String, Integer>> list = new LinkedList<Map.Entry<String, Integer>>(Severity.severities.entrySet());
+            List<Map.Entry<String, Integer>> list = new LinkedList<Map.Entry<String, Integer>>(Severity.getSeverities().entrySet());
             Collections.sort(list, (i1, i2) -> i2.getValue().compareTo(i1.getValue()));
 
             ListBoxModel items = new ListBoxModel();
