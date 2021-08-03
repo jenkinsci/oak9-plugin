@@ -52,22 +52,38 @@ public class FileArchiver {
      * @throws IOException thrown in the event that zip file cannot be created
      */
     public void zipFiles(String base_path) throws IOException {
-        FileOutputStream fos = new FileOutputStream(this.basePath + File.separator + this.outputFileName);
-        ZipOutputStream zipOut = new ZipOutputStream(fos);
-        for (File file : this.filesList) {
-            FileInputStream fis = new FileInputStream(file);
-            ZipEntry zipEntry = new ZipEntry(file.getAbsoluteFile().toString().replace(base_path, ""));
-            zipOut.putNextEntry(zipEntry);
+        IOException runError = null;
+        FileOutputStream fos = null;
+        ZipOutputStream zipOut = null;
+        FileInputStream fis = null;
 
-            byte[] bytes = new byte[1024];
-            int length;
-            while((length = fis.read(bytes)) >= 0) {
-                zipOut.write(bytes, 0, length);
+        fos = new FileOutputStream(this.basePath + File.separator + this.outputFileName);
+        zipOut = new ZipOutputStream(fos);
+
+        try {
+            for (File file : this.filesList) {
+                fis = new FileInputStream(file);
+                ZipEntry zipEntry = new ZipEntry(file.getAbsoluteFile().toString().replace(base_path, ""));
+                zipOut.putNextEntry(zipEntry);
+
+                byte[] bytes = new byte[1024];
+                int length;
+                while((length = fis.read(bytes)) >= 0) {
+                    zipOut.write(bytes, 0, length);
+                }
             }
-            fis.close();
+        } catch (IOException e) {
+            runError = e;
+        } finally {
+            if (fis != null) {
+                fis.close();
+            }
+            zipOut.close();
+            fos.close();
         }
-        zipOut.close();
-        fos.close();
+        if (runError != null) {
+            throw runError;
+        }
     }
 
 }

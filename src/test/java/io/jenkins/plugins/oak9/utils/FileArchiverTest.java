@@ -1,56 +1,24 @@
 package io.jenkins.plugins.oak9.utils;
 
 import hudson.FilePath;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
 
-class FileArchiverTest {
-
-    private FileArchiver fileArchiverUnderTest;
-
-    @BeforeEach
-    void setUp() {
-        //fileArchiverUnderTest = new FileArchiver(new FilePath(new File("filename.txt")), Arrays.asList(new File("filename.txt")), "test.zip");
-    }
-
+public class FileArchiverTest {
     @Test
-    void testZipFiles1() throws Exception {
-        // Setup
+    public void testConstructor() {
+        // TODO: This test is incomplete.
+        //   Reason: Nothing to assert: the constructed class does not have observers (e.g. getters or public fields).
+        //   Add observers (e.g. getters or public fields) to the class.
+        //   See https://diff.blue/R002
 
+        FilePath basePath = new FilePath(Paths.get(System.getProperty("java.io.tmpdir"), "test.txt").toFile());
+        new FileArchiver(basePath, new ArrayList<File>(), "foo.txt");
 
-        // Run the test
-        fileArchiverUnderTest.zipFiles();
-
-        // Verify the results
-    }
-
-    @Test
-    void testZipFiles1_ThrowsIOException() {
-        // Run the test
-        assertThrows(IOException.class, () -> fileArchiverUnderTest.zipFiles());
-    }
-
-    @Test
-    void testZipFiles2() throws Exception {
-        // Setup
-
-        // Run the test
-        //fileArchiverUnderTest.zipFiles("base_path");
-
-        // Verify the results
-    }
-
-    @Test
-    void testZipFiles2_ThrowsIOException() {
-        // Setup
-
-        // Run the test
-        //assertThrows(IOException.class, () -> fileArchiverUnderTest.zipFiles("base_path"));
     }
 }
+

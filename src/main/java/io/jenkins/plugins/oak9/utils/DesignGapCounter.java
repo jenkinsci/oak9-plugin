@@ -5,13 +5,28 @@ import java.util.Map;
 
 public class DesignGapCounter {
 
-    private final Map<String, Integer> designGapViolationCounter = new HashMap<String, Integer>();
+    private Map<String, Integer> designGapViolationCounter = new HashMap<String, Integer>();
 
     public DesignGapCounter() {
-        for(Map.Entry<String, Integer> severity : Severity.severities.entrySet()) {
+        Map<String, Integer> newCounter = new HashMap<String, Integer>();
+        for(Map.Entry<String, Integer> severity : Severity.getSeverities().entrySet()) {
             String key = severity.getKey();
-            this.designGapViolationCounter.put(key, 0);
+            newCounter.put(key, 0);
         }
+        setDesignGapViolationCounter(newCounter);
+    }
+
+    public void setDesignGapViolationCounter(Map<String, Integer> designGapViolationCounter) {
+        this.designGapViolationCounter = designGapViolationCounter;
+    }
+
+    /**
+     * Returns the current map of design gap counts
+     *
+     * @return design gap count hash map
+     */
+    public Map<String, Integer> getDesignGapViolationCounter() {
+        return designGapViolationCounter;
     }
 
     /**

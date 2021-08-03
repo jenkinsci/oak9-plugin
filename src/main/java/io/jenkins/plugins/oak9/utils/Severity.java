@@ -10,7 +10,7 @@ public class Severity
     /**
      * Mapping of severity terms to numerical values for comparison
      */
-    public static final Map<String, Integer> severities = new HashMap<String, Integer>() {{
+    private static final Map<String, Integer> severities = new HashMap<String, Integer>() {{
         put("low", 1);
         put("moderate", 2);
         put("high", 3);
@@ -49,6 +49,10 @@ public class Severity
         }
 
         return response;
+    }
+
+    public static Map<String, Integer> getSeverities() {
+        return severities;
     }
 
 }

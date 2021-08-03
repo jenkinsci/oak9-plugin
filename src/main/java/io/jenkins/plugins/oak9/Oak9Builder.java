@@ -23,6 +23,7 @@ import io.jenkins.plugins.oak9.model.ValidationResult;
 import io.jenkins.plugins.oak9.model.Violation;
 import io.jenkins.plugins.oak9.utils.*;
 import jenkins.model.Jenkins;
+import okhttp3.OkHttpClient;
 import org.apache.commons.lang.WordUtils;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import jenkins.tasks.SimpleBuildStep;
 import org.w3c.dom.Document;
@@ -172,6 +174,26 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     }
 
     /**
+     * Generate an API client to inject
+     *
+     * @param run the Jenkins run
+     * @param taskListener the Jenkins task listener for logging
+     * @return a ready-to-use http client
+     */
+    public Oak9ApiClient generateHttpClient(Run<?, ?> run, TaskListener taskListener) {
+        return new Oak9ApiClient(
+                this.baseUrl,
+                getCredentials(run, this.getCredentialsId()).getSecret().getPlainText(),
+                this.orgId,
+                this.projectId,
+                taskListener,
+                new OkHttpClient.Builder()
+                        .connectTimeout(5, TimeUnit.SECONDS)
+                        .readTimeout(30, TimeUnit.SECONDS)
+                        .build());
+    }
+
+    /**
      * Jenkins plugin entry point.
      *
      * @param run the current Jenkins build
@@ -189,11 +211,9 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                         @NonNull Launcher launcher,
                         @NonNull TaskListener taskListener
     ) throws IOException, InterruptedException {
-
         long zipTimestamp = System.currentTimeMillis() / 1000L;
         String zipOutputFile = "oak9-" + zipTimestamp + ".zip";
         taskListener.getLogger().println("Packaging IaC files for oak9...\n");
-
         ByteArrayOutputStream zipFile = new ByteArrayOutputStream();
         workspace.zip(zipFile, new IacExtensionFilter());
 
@@ -207,14 +227,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
 
         // Make request to oak9 API to push zip file
         taskListener.getLogger().print("Sending IaC files to oak9...\n");
-        StringCredentials oak9key = getCredentials(run, this.getCredentialsId());
-        oak9ApiClient client = new oak9ApiClient(
-                this.baseUrl,
-                oak9key.getSecret().getPlainText(),
-                this.orgId,
-                this.projectId,
-                taskListener);
-
+        Oak9ApiClient client = generateHttpClient(run, taskListener);
         ValidationResult postFileResult;
         try {
             postFileResult = client.postFileValidation(zipOutputFile, zipFile);
@@ -223,6 +236,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
             run.setResult(Result.FAILURE);
             return;
         }
+        
         // Check status endpoint
         if (!postFileResult.getStatus().toLowerCase().equals("queued") && !postFileResult.getStatus().toLowerCase().equals("completed")) {
             taskListener.error("Unexpected status: " + postFileResult.getStatus() + " from oak9 API");
@@ -380,7 +394,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
          */
         public ListBoxModel doFillMaxSeverityItems() {
             // Sort items by severity (descending).
-            List<Map.Entry<String, Integer>> list = new LinkedList<Map.Entry<String, Integer>>(Severity.severities.entrySet());
+            List<Map.Entry<String, Integer>> list = new LinkedList<Map.Entry<String, Integer>>(Severity.getSeverities().entrySet());
             Collections.sort(list, (i1, i2) -> i2.getValue().compareTo(i1.getValue()));
 
             ListBoxModel items = new ListBoxModel();

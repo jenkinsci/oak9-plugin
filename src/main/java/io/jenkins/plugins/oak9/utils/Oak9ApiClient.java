@@ -10,9 +10,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-public class oak9ApiClient {
+public class Oak9ApiClient {
 
     /**
      * The base url of the oak9 API
@@ -42,7 +43,7 @@ public class oak9ApiClient {
     /**
      * Max attempts to communicate with an API endpoint before giving up
      */
-    private final int maxAttempts = 30;
+    private static final int maxAttempts = 30;
 
     /**
      * Jenkins task listener, primarily used for logging
@@ -52,7 +53,7 @@ public class oak9ApiClient {
     /**
      * A delay in ms to wait before re-attempting an API request that received a transient error
      */
-    private final int transientErrorDelayInMs = 1000;
+    private static final int transientErrorDelayInMs = 1000;
 
     /**
      * Constructor
@@ -63,16 +64,20 @@ public class oak9ApiClient {
      * @param projectId
      * @param jenkinsTaskListener
      */
-    public oak9ApiClient(String baseUrl, String key, String orgId, String projectId, TaskListener jenkinsTaskListener) {
+    public Oak9ApiClient(
+            String baseUrl,
+            String key,
+            String orgId,
+            String projectId,
+            TaskListener jenkinsTaskListener,
+            OkHttpClient httpClient
+    ) {
         this.baseUrl = baseUrl;
         this.key = key;
         this.orgId = orgId;
         this.projectId = projectId;
         this.jenkinsTaskListener = jenkinsTaskListener;
-        this.client = new OkHttpClient.Builder()
-                .connectTimeout(5, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build();
+        this.client = httpClient;
     }
 
     /**
@@ -99,7 +104,7 @@ public class oak9ApiClient {
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("files", fileName,
-                        RequestBodyBuilder.create(fileContent, MediaType.parse("application/zip")))
+                        new RequestBodyBuilder(fileContent, MediaType.parse("application/zip")).create().getRequestBody())
                 .build();
 
         String credentials = Credentials.basic(this.orgId, this.key);
@@ -116,8 +121,13 @@ public class oak9ApiClient {
             switch (response.code()) {
                 case 200:
                     ObjectMapper mapper = new ObjectMapper();
-                    ApiResponse apiResponse = mapper.readValue(response.body().charStream(), ApiResponse.class);
-                    return apiResponse.getResult();
+                    ResponseBody responseBody = response.body();
+                    if (responseBody == null) {
+                        throw new IOException("Unable to determine results from API response.\n");
+                    } else {
+                        ApiResponse apiResponse = mapper.readValue(responseBody.charStream(), ApiResponse.class);
+                        return apiResponse.getResult();
+                    }
                 case 503:
                     jenkinsTaskListener.getLogger().println("oak9 API rate limit reached. Waiting 1s before trying again.\n");
                     if (attempts > this.maxAttempts) {
@@ -176,23 +186,28 @@ public class oak9ApiClient {
         try (Response response = client.newCall(request).execute()) {
             if (response.isSuccessful()) {
                 ObjectMapper mapper = new ObjectMapper();
-                ApiResponse apiResponse = mapper.readValue(response.body().charStream(), ApiResponse.class);
-                switch (apiResponse.getStatus().toLowerCase()) {
-                    case "queued":
-                    case "inprogress":
-                        if (attempts > this.maxAttempts) {
-                            throw new IOException("Max attempts reached to obtain an Oak9 status. Aborting.\n");
-                        }
+                ResponseBody responseBody = response.body();
+                if (responseBody == null) {
+                    throw new IOException("Unable to read API response body.\n");
+                } else {
+                    ApiResponse apiResponse = mapper.readValue(responseBody.charStream(), ApiResponse.class);
+                    switch (apiResponse.getStatus().toLowerCase()) {
+                        case "queued":
+                        case "inprogress":
+                            if (attempts > maxAttempts) {
+                                throw new IOException("Max attempts reached to obtain an Oak9 status. Aborting.\n");
+                            }
 
-                        attempts++;
-                        jenkinsTaskListener.getLogger().println("Waiting for results (" + attempts + " seconds elapsed)\n");
-                        pauseApiRequests(transientErrorDelayInMs);
-                        return pollStatus(result, attempts);
-                    case "completed":
-                        jenkinsTaskListener.getLogger().println("Scanning completed. Returning results...\n");
-                        return apiResponse;
-                    default:
-                        throw new IOException("Unexpected task status: " + apiResponse.getStatus() + ".\n");
+                            attempts++;
+                            jenkinsTaskListener.getLogger().println("Waiting for results (" + attempts + " seconds elapsed)\n");
+                            pauseApiRequests(transientErrorDelayInMs);
+                            return pollStatus(result, attempts);
+                        case "completed":
+                            jenkinsTaskListener.getLogger().println("Scanning completed. Returning results...\n");
+                            return apiResponse;
+                        default:
+                            throw new IOException("Unexpected task status: " + apiResponse.getStatus() + ".\n");
+                    }
                 }
             } else {
                 // if we got a timeout or a slow down response, let's wait 10s and try again
