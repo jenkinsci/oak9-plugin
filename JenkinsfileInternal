@@ -3,6 +3,8 @@
 node {
     try {
         stage('Build') {
+            sh 'echo "Checking out code from SCM"'
+            checkout scm
             sh 'echo "Building Plugin"'
             sh 'mvn install'
         }
