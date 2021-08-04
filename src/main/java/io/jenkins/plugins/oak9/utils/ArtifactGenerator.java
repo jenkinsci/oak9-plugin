@@ -5,12 +5,14 @@ import io.jenkins.plugins.oak9.model.Violation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
 
@@ -19,7 +21,7 @@ public class ArtifactGenerator
     public static String generateDesignGapXmlDocument(List<DesignGap> designGaps)
             throws ParserConfigurationException, TransformerException {
 
-        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory documentBuilderFactory = generteSecureDocumentBuilderFactory();
         DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 
         Document xmlDocument = documentBuilder.newDocument();
@@ -85,6 +87,50 @@ public class ArtifactGenerator
     }
 
     /**
+     * Generate a secure DocumentBuilderFactory as per:
+     * https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
+     * @return DocumentBuilderFactory
+     */
+    private static DocumentBuilderFactory generteSecureDocumentBuilderFactory() throws ParserConfigurationException {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        String FEATURE = null;
+        // This is the PRIMARY defense. If DTDs (doctypes) are disallowed, almost all
+        // XML entity attacks are prevented
+        // Xerces 2 only - http://xerces.apache.org/xerces2-j/features.html#disallow-doctype-decl
+        FEATURE = "http://apache.org/xml/features/disallow-doctype-decl";
+        dbf.setFeature(FEATURE, true);
+
+        // If you can't completely disable DTDs, then at least do the following:
+        // Xerces 1 - http://xerces.apache.org/xerces-j/features.html#external-general-entities
+        // Xerces 2 - http://xerces.apache.org/xerces2-j/features.html#external-general-entities
+        // JDK7+ - http://xml.org/sax/features/external-general-entities
+        //This feature has to be used together with the following one, otherwise it will not protect you from XXE for sure
+        FEATURE = "http://xml.org/sax/features/external-general-entities";
+        dbf.setFeature(FEATURE, false);
+
+        // Xerces 1 - http://xerces.apache.org/xerces-j/features.html#external-parameter-entities
+        // Xerces 2 - http://xerces.apache.org/xerces2-j/features.html#external-parameter-entities
+        // JDK7+ - http://xml.org/sax/features/external-parameter-entities
+        //This feature has to be used together with the previous one, otherwise it will not protect you from XXE for sure
+        FEATURE = "http://xml.org/sax/features/external-parameter-entities";
+        dbf.setFeature(FEATURE, false);
+
+        // Disable external DTDs as well
+        FEATURE = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
+        dbf.setFeature(FEATURE, false);
+
+        // and these as well, per Timothy Morgan's 2014 paper: "XML Schema, DTD, and Entity Attacks"
+        dbf.setXIncludeAware(false);
+        dbf.setExpandEntityReferences(false);
+
+        // And, per Timothy Morgan: "If for some reason support for inline DOCTYPEs are a requirement, then
+        // ensure the entity settings are disabled (as shown above) and beware that SSRF attacks
+        // (http://cwe.mitre.org/data/definitions/918.html) and denial
+        // of service attacks (such as billion laughs or decompression bombs via "jar:") are a risk."
+        return dbf;
+    }
+
+    /**
      * Helper method for transforming Document to a string
      * @param xmlDocument the xml doc to convert
      * @return the xml in string form
@@ -92,6 +138,8 @@ public class ArtifactGenerator
      */
     private static String convertDocumentToString(Document xmlDocument) throws TransformerException {
         TransformerFactory tf = TransformerFactory.newInstance();
+        tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
         Transformer transformer = tf.newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");

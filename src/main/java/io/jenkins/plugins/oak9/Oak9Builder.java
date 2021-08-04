@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import jenkins.tasks.SimpleBuildStep;
+import org.kohsuke.stapler.verb.POST;
 import org.w3c.dom.Document;
 
 public class Oak9Builder extends Builder implements SimpleBuildStep {
@@ -392,6 +393,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
          *
          * @return ListBoxModel
          */
+        @POST
         public ListBoxModel doFillMaxSeverityItems() {
             // Sort items by severity (descending).
             List<Map.Entry<String, Integer>> list = new LinkedList<Map.Entry<String, Integer>>(Severity.getSeverities().entrySet());
@@ -411,6 +413,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
          * @param credentialsId - the credentials ID that is currently selected
          * @return
          */
+        @POST
         public ListBoxModel doFillCredentialsIdItems(@QueryParameter String serverUrl,
                                                      @QueryParameter String credentialsId) {
             Jenkins jenkins = Jenkins.get();
