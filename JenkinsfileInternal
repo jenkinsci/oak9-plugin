@@ -3,10 +3,16 @@
 node {
     try {
         stage('Build') {
-            sh 'echo "Checking out code from SCM"'
-            checkout scm
-            sh 'echo "Building Plugin"'
-            sh 'mvn install'
+            withMaven(
+                    // Maven installation declared in the Jenkins "Global Tool Configuration"
+                    maven: 'maven-3', // (1)
+                    // Use `$WORKSPACE/.repository` for local repository folder to avoid shared repositories
+                    mavenLocalRepo: '.repository', // (2)
+            ) {
+                // Run the maven build
+                sh "mvn clean verify"
+
+            } // withMaven will discover the generated Maven artifacts, JUnit Surefire & FailSafe & FindBugs & SpotBugs reports...
         }
     } finally {
               archiveArtifacts artifacts: 'target/oak9.hpi', fingerprint: true
