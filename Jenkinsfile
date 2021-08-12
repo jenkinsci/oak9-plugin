@@ -1,9 +1,15 @@
-#!/usr/bin/env groovy
+def recentLTS = "2.263.1"
+def commonVersion = "2.263.3"
+def configurations = [
+        [ platform: "linux", jdk: "8", jenkins: null ],
+        // windows
+        [ platform: "windows", jdk: "8", jenkins: recentLTS, javaLevel: "8" ],
+        // java 11
+        [ platform: "linux", jdk: "11", jenkins: recentLTS, javaLevel: "8" ],
+        // windows
+        [ platform: "windows", jdk: "8", jenkins: commonVersion, javaLevel: "8" ],
+        // java 11
+        [ platform: "linux", jdk: "11", jenkins: commonVersion, javaLevel: "8" ],
+]
 
-/* `buildPlugin` step provided by: https://github.com/jenkins-infra/pipeline-library */
-buildPlugin(configurations: [
-  [ platform: "linux", jdk: "11" ],
-  [ platform: "windows", jdk: "11" ],
-  [ platform: "linux", jdk: "11", jenkins: "2.222.4", javaLabel: "8" ],
-  [ platform: "windows", jdk: "11", jenkins: "2.222.4", javaLabel: "8" ]
-])
+buildPlugin(configurations: configurations)
