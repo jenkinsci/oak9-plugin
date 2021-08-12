@@ -12,10 +12,12 @@ import javax.xml.transform.TransformerException;
 import org.junit.jupiter.api.Test;
 
 public class ArtifactGeneratorTest {
+    private final String sysLs = System.getProperty("line.separator");
+
     @Test
     public void testGenerateDesignGapXmlDocument() throws ParserConfigurationException, TransformerException {
-        assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" + "<oak9_output>\n"
-                        + "    <design_gaps/>\n" + "</oak9_output>\n",
+        assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>" + sysLs + "<oak9_output>" + sysLs
+                        + "    <design_gaps/>" + sysLs + "</oak9_output>" + sysLs,
                 ArtifactGenerator.generateDesignGapXmlDocument(new ArrayList<DesignGap>()));
     }
 
@@ -27,11 +29,11 @@ public class ArtifactGeneratorTest {
         ArrayList<DesignGap> designGapList = new ArrayList<DesignGap>();
         designGapList.add(designGap);
         assertEquals(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" + "<oak9_output>\n" + "    <design_gaps>\n"
-                        + "        <design_gap>\n" + "            <requirement_id/>\n" + "            <requirement_name/>\n"
-                        + "            <source/>\n" + "            <requirement/>\n" + "            <resource_name/>\n"
-                        + "            <resource_id/>\n" + "            <resource_type/>\n" + "            <oak9_guidance/>\n"
-                        + "            <violations/>\n" + "        </design_gap>\n" + "    </design_gaps>\n" + "</oak9_output>\n",
+                "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>" + sysLs + "<oak9_output>" + sysLs + "    <design_gaps>" + sysLs
+                        + "        <design_gap>" + sysLs + "            <requirement_id/>" + sysLs + "            <requirement_name/>" + sysLs
+                        + "            <source/>" + sysLs + "            <requirement/>" + sysLs + "            <resource_name/>" + sysLs
+                        + "            <resource_id/>" + sysLs + "            <resource_type/>" + sysLs + "            <oak9_guidance/>" + sysLs
+                        + "            <violations/>" + sysLs + "        </design_gap>" + sysLs + "    </design_gaps>" + sysLs + "</oak9_output>" + sysLs,
                 ArtifactGenerator.generateDesignGapXmlDocument(designGapList));
     }
 }
