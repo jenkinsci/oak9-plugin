@@ -8,7 +8,7 @@ import io.jenkins.plugins.oak9.model.ValidationResult;
 import java.io.IOException;
 
 import okhttp3.OkHttpClient;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 public class oak9ApiClientTest {
     private String orgId = "testorg";

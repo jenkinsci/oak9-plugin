@@ -10,35 +10,33 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 public class Oak9ApiClient {
 
     /**
      * The base url of the oak9 API
      */
-    private final String baseUrl;
+    private String baseUrl;
 
     /**
      * oak9 API Key
      */
-    private final String key;
+    private String key;
 
     /**
      * oak9 org ID
      */
-    private final String orgId;
+    private String orgId;
 
     /**
      * oak9 Project ID
      */
-    private final String projectId;
+    private String projectId;
 
     /**
      * okhttp3 client
      */
-    private final OkHttpClient client;
+    private OkHttpClient client;
 
     /**
      * Max attempts to communicate with an API endpoint before giving up
@@ -48,7 +46,7 @@ public class Oak9ApiClient {
     /**
      * Jenkins task listener, primarily used for logging
      */
-    private final TaskListener jenkinsTaskListener;
+    private TaskListener jenkinsTaskListener;
 
     /**
      * A delay in ms to wait before re-attempting an API request that received a transient error
@@ -57,8 +55,7 @@ public class Oak9ApiClient {
 
     /**
      * Constructor
-     *
-     * @param baseUrl
+     *  @param baseUrl
      * @param key
      * @param orgId
      * @param projectId
