@@ -139,6 +139,9 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
      * @return
      */
     public String getBaseUrl() {
+        if (this.baseUrl == null) {
+            return "https://api.oak9.io/integrations";
+        }
         return this.baseUrl;
     }
 
@@ -183,7 +186,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
      */
     public Oak9ApiClient generateHttpClient(Run<?, ?> run, TaskListener taskListener) {
         return new Oak9ApiClient(
-                this.baseUrl,
+                this.getBaseUrl(),
                 getCredentials(run, this.getCredentialsId()).getSecret().getPlainText(),
                 this.orgId,
                 this.projectId,
@@ -206,11 +209,11 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
      */
     @Override
     public void perform(
-                        @NonNull Run<?, ?> run,
-                        @NonNull FilePath workspace,
-                        @NonNull EnvVars env,
-                        @NonNull Launcher launcher,
-                        @NonNull TaskListener taskListener
+            @NonNull Run<?, ?> run,
+            @NonNull FilePath workspace,
+            @NonNull EnvVars env,
+            @NonNull Launcher launcher,
+            @NonNull TaskListener taskListener
     ) throws IOException, InterruptedException {
         long zipTimestamp = System.currentTimeMillis() / 1000L;
         String zipOutputFile = "oak9-" + zipTimestamp + ".zip";
@@ -237,7 +240,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
             run.setResult(Result.FAILURE);
             return;
         }
-        
+
         // Check status endpoint
         if (!postFileResult.getStatus().toLowerCase().equals("queued") && !postFileResult.getStatus().toLowerCase().equals("completed")) {
             taskListener.error("Unexpected status: " + postFileResult.getStatus() + " from oak9 API");
