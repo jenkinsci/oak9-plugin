@@ -11,6 +11,7 @@ public class Severity
      * Mapping of severity terms to numerical values for comparison
      */
     private static final Map<String, Integer> severities = new HashMap<String, Integer>() {{
+        put("none", 0);
         put("low", 1);
         put("moderate", 2);
         put("high", 3);
@@ -25,7 +26,7 @@ public class Severity
      * @return boolean to indicate if this passes or fails
      */
     public static boolean exceedsSeverity(int maxSeverity, String currentSeverity) {
-        return Severity.severities.get(currentSeverity.trim().toLowerCase()) >= maxSeverity;
+        return (Severity.severities.get(currentSeverity.trim().toLowerCase()) >= maxSeverity && maxSeverity > 0);
     }
 
     /**
