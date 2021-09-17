@@ -26,7 +26,7 @@ public class Severity
      * @return boolean to indicate if this passes or fails
      */
     public static boolean exceedsSeverity(int maxSeverity, String currentSeverity) {
-        return (Severity.severities.get(currentSeverity.trim().toLowerCase()) >= maxSeverity && maxSeverity > 0);
+        return (maxSeverity > 0 && Severity.severities.get(currentSeverity.trim().toLowerCase()) >= maxSeverity);
     }
 
     /**
