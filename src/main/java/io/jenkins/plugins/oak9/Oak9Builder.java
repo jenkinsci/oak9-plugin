@@ -263,7 +263,13 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
 
         // Analyze Results
         taskListener.getLogger().print("Analyzing oak9 scan results for Request ID " + statusResult.getRequestId() + "...\n");
-        taskListener.getLogger().println("Scanning Design Gaps for severity `" + Severity.getTextForSeverityLevel(maxSeverity) + "` or higher...\n");
+
+        if (maxSeverity == 0) {
+            taskListener.getLogger().println("Severity set to `" + Severity.getTextForSeverityLevel(maxSeverity) + "`, oak9 Runner will always succeed\n");
+        } else {
+            taskListener.getLogger().println("Scanning Design Gaps for severity `" + Severity.getTextForSeverityLevel(maxSeverity) + "` or higher...\n");
+        }
+
         DesignGapCounter designGapCounter = new DesignGapCounter();
         if (statusResult.getDesignGaps().size() > 0) {
             for (DesignGap designGap : statusResult.getDesignGaps()) {
@@ -286,7 +292,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                 }
             }
 
-            taskListener.getLogger().print("Writing Design Gaps to artifacts/design_gaps.xml\n");
+            taskListener.getLogger().println("Writing Design Gaps to artifacts/design_gaps.xml\n");
             try {
                 String designGapXmlDocument = ArtifactGenerator.generateDesignGapXmlDocument(statusResult.getDesignGaps());
                 FilePath xmlOutputPath;
@@ -302,18 +308,25 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
             }
         }
 
+        String designGapMessage = "Design Gap(s) found: " +
+                "Critical " + designGapCounter.getCountForSeverity("critical") + "; " +
+                "High " + designGapCounter.getCountForSeverity("high") + "; " +
+                "Moderate " + designGapCounter.getCountForSeverity("moderate") + "; " +
+                "Low " + designGapCounter.getCountForSeverity("low");
+
         if (run.getResult() == Result.FAILURE) {
-            taskListener.error(
-                    "Design Gap(s) found: " +
-                            "Critical " + designGapCounter.getCountForSeverity("critical") + "; " +
-                            "High " + designGapCounter.getCountForSeverity("high") + "; " +
-                            "Moderate " + designGapCounter.getCountForSeverity("moderate") + "; " +
-                            "Low " + designGapCounter.getCountForSeverity("low"));
-            taskListener.getLogger().println("For more details, browse to " + apiResponse.getResultsUrl());
+            taskListener.error("Design Gap(s) found at severity `" + Severity.getTextForSeverityLevel(maxSeverity) + "` or higher.");
+            taskListener.error(designGapMessage);
+            taskListener.getLogger().println("For more details, browse to " + apiResponse.getResultsUrl() + "\n");
             taskListener.getLogger().println("oak9 Runner Failed. Stopping Build Progress.\n");
         } else {
             run.setResult(Result.SUCCESS);
-            taskListener.getLogger().println("oak9 Runner Complete\n");
+            if (maxSeverity > 0) {
+                taskListener.getLogger().println("No Design Gap(s) found at severity `" + Severity.getTextForSeverityLevel(maxSeverity) + "` or higher.");
+            }
+            taskListener.getLogger().println(designGapMessage);
+            taskListener.getLogger().println("For more details, browse to " + apiResponse.getResultsUrl() + "\n");
+            taskListener.getLogger().println("oak9 Runner Passed\n");
         }
     }
 

@@ -13,7 +13,16 @@ public class SeverityTest {
     @Test
     public void testExceedsSeverity() {
         assertFalse(Severity.exceedsSeverity(3, "low"));
-        assertTrue(Severity.exceedsSeverity(0, "low"));
+        assertTrue(Severity.exceedsSeverity(1, "low"));
+    }
+
+    @Test
+    public void testNeverFailMaxSeverityNone() {
+        // maxSeverity = 0, never fail
+        assertFalse(Severity.exceedsSeverity(0, "low"));
+        assertFalse(Severity.exceedsSeverity(0, "moderate"));
+        assertFalse(Severity.exceedsSeverity(0, "high"));
+        assertFalse(Severity.exceedsSeverity(0, "critical"));
     }
 
     @Test

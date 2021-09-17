@@ -18,21 +18,32 @@ public class DesignGapCounterTest {
 
     @Test
     public void testConstructor2() {
-        assertEquals(4, (new DesignGapCounter()).getDesignGapViolationCounter().size());
+        assertEquals(5, (new DesignGapCounter()).getDesignGapViolationCounter().size());
     }
 
     @Test
     public void testTrackDesignGapCounts() {
         DesignGapCounter designGapCounter = new DesignGapCounter();
+        assertEquals(0, designGapCounter.getDesignGapViolationCounter().get(Severity.getTextForSeverityLevel(3).toLowerCase()));
         designGapCounter.trackDesignGapCounts(3);
-        assertEquals(4, designGapCounter.getDesignGapViolationCounter().size());
+        assertEquals(1, designGapCounter.getDesignGapViolationCounter().get(Severity.getTextForSeverityLevel(3).toLowerCase()));
+        designGapCounter.trackDesignGapCounts(3);
+        assertEquals(2, designGapCounter.getDesignGapViolationCounter().get(Severity.getTextForSeverityLevel(3).toLowerCase()));
     }
 
     @Test
     public void testTrackDesignGapCounts2() {
         DesignGapCounter designGapCounter = new DesignGapCounter();
+        assertEquals(0, designGapCounter.getDesignGapViolationCounter().get(Severity.getTextForSeverityLevel(3).toLowerCase()));
         designGapCounter.trackDesignGapCounts(1);
-        assertEquals(4, designGapCounter.getDesignGapViolationCounter().size());
+        assertEquals(1, designGapCounter.getDesignGapViolationCounter().get(Severity.getTextForSeverityLevel(1).toLowerCase()));
+        designGapCounter.trackDesignGapCounts(1);
+        designGapCounter.trackDesignGapCounts(1);
+        designGapCounter.trackDesignGapCounts(1);
+        designGapCounter.trackDesignGapCounts(1);
+        designGapCounter.trackDesignGapCounts(3);
+        designGapCounter.trackDesignGapCounts(4);
+        assertEquals(5, designGapCounter.getDesignGapViolationCounter().get(Severity.getTextForSeverityLevel(1).toLowerCase()));
     }
 
     @Test
