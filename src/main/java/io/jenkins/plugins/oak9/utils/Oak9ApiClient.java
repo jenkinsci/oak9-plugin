@@ -109,7 +109,6 @@ public class Oak9ApiClient {
                 .header("Authorization", credentials)
                 .header("Accept", "*/*")
                 .header("Cache-Control", "no-cache")
-                .header("Accept-Encoding", "gzip, deflate, br")
                 .url(this.baseUrl + "/" + this.orgId + "/validations/" + this.projectId + "/queue/iac?files")
                 .post(requestBody)
                 .build();
