@@ -224,7 +224,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         if (zipFile.size() == 0) {
             taskListener.error("Unable to generate zip file: " + zipOutputFile + ". Aborting.\n");
             run.setResult(Result.FAILURE);
-            throw new IOException();
+            throw new IOException("Unable to generate zip file: " + zipOutputFile);
         } else {
             taskListener.getLogger().println("Zip file generated with size: " + zipFile.size() + "\n");
         }
@@ -238,14 +238,15 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         } catch (Exception e) {
             taskListener.error(e.getMessage());
             run.setResult(Result.FAILURE);
-            return;
+            throw new IOException("Error sending files for analysis", e);
         }
 
         // Check status endpoint
         if (!postFileResult.getStatus().toLowerCase().equals("queued") && !postFileResult.getStatus().toLowerCase().equals("completed")) {
-            taskListener.error("Unexpected status: " + postFileResult.getStatus() + " from oak9 API");
+            String errorMessage = "Unexpected status: " + postFileResult.getStatus() + " from oak9 API";
+            taskListener.error(errorMessage);
             run.setResult(Result.FAILURE);
-            throw new IOException();
+            throw new IOException(errorMessage);
         }
         taskListener.getLogger().print("Files in status: " + postFileResult.getStatus() + " with requestId: " + postFileResult.getRequestId() + "\n");
         taskListener.getLogger().print("Waiting for oak9 analysis for Request ID " + postFileResult.getRequestId() + "...\n");
@@ -258,7 +259,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
         } catch (Exception e) {
             taskListener.error(e.getMessage());
             run.setResult(Result.FAILURE);
-            return;
+            throw new IOException("Error checking analysis status", e);
         }
 
         // Analyze Results
@@ -282,6 +283,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                         }
                     } catch (Exception e) {
                         taskListener.error(e.getMessage());
+                        throw new IOException("Error getting violation severity for value " + violation.getSeverity(), e);
                     }
                     if (Severity.exceedsSeverity(this.maxSeverity, violation.getSeverity())) {
                         run.setResult(Result.FAILURE);
@@ -305,6 +307,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                 xmlOutputPath.write(designGapXmlDocument, "utf-8");
             } catch (Exception e) {
                 taskListener.error(e.getMessage());
+                throw new IOException("Error generating design gap document", e);
             }
         }
 
