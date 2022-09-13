@@ -15,11 +15,12 @@ public class oak9ApiClientTest {
     private String projectId = "testorg-1";
     private String apiKey = "42d4a62c53350993ea41069e9f2cfdefb0df097d";
     private String baseUrl = "https://oak9.io";
+    private int pollingTimeoutSeconds = 30;
 
     @Test
     public void testConstructor() {
         TaskListener jenkinsTaskListener = mock(TaskListener.class);
-        new Oak9ApiClient(this.baseUrl, this.apiKey, this.orgId, this.projectId, jenkinsTaskListener, mock(OkHttpClient.class));
+        new Oak9ApiClient(this.baseUrl, this.apiKey, this.orgId, this.projectId, this.pollingTimeoutSeconds, jenkinsTaskListener, mock(OkHttpClient.class));
     }
 
 //    @Test
