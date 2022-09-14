@@ -1,9 +1,9 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:c="/lib/credentials" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:entry title="${%OrgId}" field="orgId" description="${%OrgIdDesc}">
+    <f:entry title="${%OrgId}" field="orgId">
             <f:textbox />
     </f:entry>
-    <f:entry title="${%ProjectId}" field="projectId" description="${%ProjectIdDesc}">
+    <f:entry title="${%ProjectId}" field="projectId">
         <f:textbox />
     </f:entry>
     <f:entry field="credentialsId" title="${%Key}">
@@ -11,6 +11,9 @@
     </f:entry>
     <f:entry name="maxSeverity" title="${%MaxSeverity}" field="maxSeverity">
         <f:select />
+    </f:entry>
+    <f:entry title="${%PollingTimeoutSeconds}" field="pollingTimeoutSeconds">
+        <f:number default="30"/>
     </f:entry>
     <f:section title="Advanced Project Options">
       <f:advanced>

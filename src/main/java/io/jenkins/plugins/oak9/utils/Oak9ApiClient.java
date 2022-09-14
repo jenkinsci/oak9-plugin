@@ -34,14 +34,14 @@ public class Oak9ApiClient {
     private String projectId;
 
     /**
+     * Max time in seconds to wait for validation to complete
+     */
+    private int pollingTimeoutSeconds;
+
+    /**
      * okhttp3 client
      */
     private OkHttpClient client;
-
-    /**
-     * Max attempts to communicate with an API endpoint before giving up
-     */
-    private static final int maxAttempts = 30;
 
     /**
      * Jenkins task listener, primarily used for logging
@@ -66,6 +66,7 @@ public class Oak9ApiClient {
             String key,
             String orgId,
             String projectId,
+            int pollingTimeoutSeconds,
             TaskListener jenkinsTaskListener,
             OkHttpClient httpClient
     ) {
@@ -73,6 +74,7 @@ public class Oak9ApiClient {
         this.key = key;
         this.orgId = orgId;
         this.projectId = projectId;
+        this.pollingTimeoutSeconds = pollingTimeoutSeconds;
         this.jenkinsTaskListener = jenkinsTaskListener;
         this.client = httpClient;
     }
@@ -126,7 +128,7 @@ public class Oak9ApiClient {
                     }
                 case 503:
                     jenkinsTaskListener.getLogger().println("oak9 API rate limit reached. Waiting 1s before trying again.\n");
-                    if (attempts > this.maxAttempts) {
+                    if (attempts > this.pollingTimeoutSeconds) {
                         throw new IOException("Communication with oak9 API has timed out.\n");
                     }
 
@@ -190,7 +192,7 @@ public class Oak9ApiClient {
                     switch (apiResponse.getStatus().toLowerCase()) {
                         case "queued":
                         case "inprogress":
-                            if (attempts > maxAttempts) {
+                            if (attempts > pollingTimeoutSeconds) {
                                 throw new IOException("Max attempts reached to obtain an Oak9 status. Aborting.\n");
                             }
 
@@ -206,10 +208,10 @@ public class Oak9ApiClient {
                     }
                 }
             } else {
-                // if we got a timeout or a slow down response, let's wait 10s and try again
+                // if we got a timeout or a slow down response, let's wait and try again
                 if (response.code() == 503 || response.code() == 504) {
                     attempts++;
-                    jenkinsTaskListener.getLogger().println("Received a rate limit or timeout. Pausing 10s before trying again.\n");
+                    jenkinsTaskListener.getLogger().println("Received a rate limit or timeout. Pausing before trying again.\n");
                     pauseApiRequests(transientErrorDelayInMs);
                     return pollStatus(result, attempts);
                 }

@@ -35,7 +35,6 @@ import static com.cloudbees.plugins.credentials.domains.URIRequirementBuilder.fr
 import javax.servlet.ServletException;
 import java.io.*;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +42,6 @@ import java.util.concurrent.TimeUnit;
 
 import jenkins.tasks.SimpleBuildStep;
 import org.kohsuke.stapler.verb.POST;
-import org.w3c.dom.Document;
 
 public class Oak9Builder extends Builder implements SimpleBuildStep {
 
@@ -73,6 +71,16 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     private String baseUrl;
 
     /**
+     * Max time in seconds to wait for validation to complete
+     */
+    private int pollingTimeoutSeconds;
+
+    /**
+     * Default time for polling timeout
+     */
+    private static final int defaultPollingTimeoutSeconds = 30;
+
+    /**
      * Constructor is setup by Jenkins when it instantiates the plugin
      *
      * @param orgId the oak9-provided org ID
@@ -81,12 +89,13 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
      * @param maxSeverity the severity at which the job will fail (at or above)
      */
     @DataBoundConstructor
-    public Oak9Builder(String orgId, String projectId, String credentialsId, int maxSeverity, String baseUrl) {
+    public Oak9Builder(String orgId, String projectId, String credentialsId, int maxSeverity, String baseUrl, int pollingTimeoutSeconds) {
         this.orgId = orgId;
         this.projectId = projectId;
         this.credentialsId = credentialsId;
         this.maxSeverity = maxSeverity;
         this.baseUrl = baseUrl;
+        this.pollingTimeoutSeconds = pollingTimeoutSeconds;
     }
 
     /**
@@ -135,6 +144,15 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     }
 
     /**
+     * Sets the amount of time to wait for a validation to complete
+     * @param pollingTimeoutSeconds an integer representing the seconds to wait
+     */
+    @DataBoundSetter
+    public void setPollingTimeoutSeconds(int pollingTimeoutSeconds) {
+        this.pollingTimeoutSeconds = pollingTimeoutSeconds;
+    }
+
+    /**
      * Returns the current base URL
      * @return
      */
@@ -178,6 +196,17 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     }
 
     /**
+     * The amount of time to wait for a validation to complete
+     * @return the polling timeout
+     */
+    public int getPollingTimeoutSeconds() {
+        if (this.pollingTimeoutSeconds <= 0) {
+            return defaultPollingTimeoutSeconds;
+        }
+        return this.pollingTimeoutSeconds;
+    }
+
+    /**
      * Generate an API client to inject
      *
      * @param run the Jenkins run
@@ -190,6 +219,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                 getCredentials(run, this.getCredentialsId()).getSecret().getPlainText(),
                 this.orgId,
                 this.projectId,
+                this.getPollingTimeoutSeconds(),
                 taskListener,
                 new OkHttpClient.Builder()
                         .connectTimeout(5, TimeUnit.SECONDS)
