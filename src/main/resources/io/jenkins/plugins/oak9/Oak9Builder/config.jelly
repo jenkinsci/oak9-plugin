@@ -12,11 +12,11 @@
     <f:entry name="maxSeverity" title="${%MaxSeverity}" field="maxSeverity">
         <f:select />
     </f:entry>
+    <f:entry title="${%PollingTimeoutSeconds}" field="pollingTimeoutSeconds">
+        <f:number default="30"/>
+    </f:entry>
     <f:section title="Advanced Project Options">
       <f:advanced>
-        <f:entry title="${%PollingTimeoutSeconds}" field="pollingTimeoutSeconds">
-            <f:number default="30"/>
-        </f:entry>
         <f:entry title="${%BaseUrl}" field="baseUrl">
             <f:textbox default="${descriptor.defaultBaseUrl()}"/>
         </f:entry>

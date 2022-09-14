@@ -76,6 +76,11 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     private int pollingTimeoutSeconds;
 
     /**
+     * Default time for polling timeout
+     */
+    private static final int defaultPollingTimeoutSeconds = 30;
+
+    /**
      * Constructor is setup by Jenkins when it instantiates the plugin
      *
      * @param orgId the oak9-provided org ID
@@ -196,7 +201,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
      */
     public int getPollingTimeoutSeconds() {
         if (this.pollingTimeoutSeconds <= 0) {
-            return 30;
+            return defaultPollingTimeoutSeconds;
         }
         return this.pollingTimeoutSeconds;
     }
