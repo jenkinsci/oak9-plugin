@@ -41,25 +41,37 @@ public class IacExtensionFilterTest {
     @Test
     public void testAccept6() {
         IacExtensionFilter iacExtensionFilter = new IacExtensionFilter();
-        assertFalse(iacExtensionFilter.accept(Paths.get(System.getProperty("java.io.tmpdir"), "test.txt").toFile(), "foo"));
+        assertFalse(iacExtensionFilter.accept(Paths.get(System.getProperty("java.io.tmpdir"), "U.yml").toFile()));
     }
 
     @Test
     public void testAccept7() {
         IacExtensionFilter iacExtensionFilter = new IacExtensionFilter();
-        assertTrue(iacExtensionFilter.accept(Paths.get(System.getProperty("java.io.tmpdir"), "U.tfU").toFile(), "foo"));
+        assertFalse(iacExtensionFilter.accept(Paths.get(System.getProperty("java.io.tmpdir"), "test.txt").toFile(), "foo"));
     }
 
     @Test
     public void testAccept8() {
         IacExtensionFilter iacExtensionFilter = new IacExtensionFilter();
-        assertTrue(iacExtensionFilter.accept(Paths.get(System.getProperty("java.io.tmpdir"), "U.json").toFile(), "foo"));
+        assertTrue(iacExtensionFilter.accept(Paths.get(System.getProperty("java.io.tmpdir"), "U.tfU").toFile(), "foo"));
     }
 
     @Test
     public void testAccept9() {
         IacExtensionFilter iacExtensionFilter = new IacExtensionFilter();
+        assertTrue(iacExtensionFilter.accept(Paths.get(System.getProperty("java.io.tmpdir"), "U.json").toFile(), "foo"));
+    }
+
+    @Test
+    public void testAccept10() {
+        IacExtensionFilter iacExtensionFilter = new IacExtensionFilter();
         assertTrue(iacExtensionFilter.accept(Paths.get(System.getProperty("java.io.tmpdir"), "U.yaml").toFile(), "foo"));
+    }
+
+    @Test
+    public void testAccept11() {
+        IacExtensionFilter iacExtensionFilter = new IacExtensionFilter();
+        assertFalse(iacExtensionFilter.accept(Paths.get(System.getProperty("java.io.tmpdir"), "U.yml").toFile(), "foo"));
     }
 }
 
