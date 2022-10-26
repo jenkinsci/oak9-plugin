@@ -10,6 +10,6 @@ https://docs.oak9.io/oak9/fundamentals/integrations/integrate-with-ci-cd-tools/s
 License
 -------
 
-Copyright 2021 oak9, Inc.
+Copyright 2022 oak9, Inc.
 
 Licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)

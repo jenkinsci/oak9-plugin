@@ -8,9 +8,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class IacExtensionFilter
-        implements FileFilter, Serializable, IOFileFilter {
+        implements FileFilter, Serializable {
 
-    private final List<String> allowedExtensionPatterns = Arrays.asList(".*\\.tf.*", ".*\\.json", ".*\\.yaml");
+    private final List<String> allowedExtensionPatterns = Arrays.asList(".*\\.tf.*", ".*\\.json", ".*\\.yaml", ".*\\.yml");
 
     /**
      * Override for accept criteria on FileFilter
@@ -32,17 +32,5 @@ public final class IacExtensionFilter
         }
 
         return false;
-    }
-
-    /**
-     * Override for accept criteria on IFFileFilter
-     *
-     * @param file to be evaluated
-     * @return whether the evaluation as passed
-     */
-    @Override
-    public boolean accept(File file, String s) {
-        File complete_file = new File(file.getName());
-        return accept(complete_file);
     }
 }
