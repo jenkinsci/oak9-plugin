@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "results",
         "orgId",
         "projectId",
+        "projectEnvironmentId",
         "version",
         "entityType"
 })
@@ -62,6 +63,8 @@ public class ValidationResult {
     private String orgId;
     @JsonProperty("projectId")
     private String projectId;
+    @JsonProperty("projectEnvironmentId")
+    private String projectEnvironmentId;
     @JsonProperty("version")
     private String version;
     @JsonProperty("entityType")
@@ -91,9 +94,10 @@ public class ValidationResult {
      * @param resultRef
      * @param results
      * @param projectId
+     * @param projectEnvironmentId
      * @param status
      */
-    public ValidationResult(String requestId, Object repositoryName, String timeStamp, List<Object> resources, String status, Object errorMessage, Object source, List<DesignGap> designGaps, ResultRef resultRef, List<Object> results, String orgId, String projectId, String version, String entityType) {
+    public ValidationResult(String requestId, Object repositoryName, String timeStamp, List<Object> resources, String status, Object errorMessage, Object source, List<DesignGap> designGaps, ResultRef resultRef, List<Object> results, String orgId, String projectId, String projectEnvironmentId, String version, String entityType) {
         this.requestId = requestId;
         this.repositoryName = repositoryName;
         this.timeStamp = timeStamp;
@@ -106,6 +110,7 @@ public class ValidationResult {
         this.results = results;
         this.orgId = orgId;
         this.projectId = projectId;
+        this.projectEnvironmentId = projectEnvironmentId;
         this.version = version;
         this.entityType = entityType;
     }
@@ -228,6 +233,16 @@ public class ValidationResult {
     @JsonProperty("projectId")
     public void setProjectId(String projectId) {
         this.projectId = projectId;
+    }
+
+    @JsonProperty("projectEnvironmentId")
+    public String getProjectEnvironmentId() {
+        return projectEnvironmentId;
+    }
+
+    @JsonProperty("projectEnvironmentId")
+    public void setProjectEnvironmentId(String projectEnvironmentId) {
+        this.projectEnvironmentId = projectEnvironmentId;
     }
 
     @JsonProperty("version")

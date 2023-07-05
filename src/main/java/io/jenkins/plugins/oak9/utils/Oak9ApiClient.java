@@ -34,6 +34,11 @@ public class Oak9ApiClient {
     private String projectId;
 
     /**
+     * oak9 Project ID
+     */
+    private String projectEnvironmentId;
+
+    /**
      * Max time in seconds to wait for validation to complete
      */
     private int pollingTimeoutSeconds;
@@ -59,6 +64,7 @@ public class Oak9ApiClient {
      * @param key
      * @param orgId
      * @param projectId
+     * @param projectEnvironmentId
      * @param jenkinsTaskListener
      */
     public Oak9ApiClient(
@@ -66,6 +72,7 @@ public class Oak9ApiClient {
             String key,
             String orgId,
             String projectId,
+            String projectEnvironmentId,
             int pollingTimeoutSeconds,
             TaskListener jenkinsTaskListener,
             OkHttpClient httpClient
@@ -74,6 +81,7 @@ public class Oak9ApiClient {
         this.key = key;
         this.orgId = orgId;
         this.projectId = projectId;
+        this.projectEnvironmentId = projectEnvironmentId;
         this.pollingTimeoutSeconds = pollingTimeoutSeconds;
         this.jenkinsTaskListener = jenkinsTaskListener;
         this.client = httpClient;
@@ -107,11 +115,15 @@ public class Oak9ApiClient {
                 .build();
 
         String credentials = Credentials.basic(this.orgId, this.key);
+        String url = (
+            this.baseUrl + "/" + this.orgId + "/validations/" + this.projectId + "/queue/iac" +
+            (this.projectEnvironmentId == null || this.projectEnvironmentId == "" ? "" : "/" + this.projectEnvironmentId) +
+            "?files");
         Request request = new Request.Builder()
                 .header("Authorization", credentials)
                 .header("Accept", "*/*")
                 .header("Cache-Control", "no-cache")
-                .url(this.baseUrl + "/" + this.orgId + "/validations/" + this.projectId + "/queue/iac?files")
+                .url(url)
                 .post(requestBody)
                 .build();
 

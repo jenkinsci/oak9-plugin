@@ -56,6 +56,11 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     private String projectId;
 
     /**
+     * Oak9 Project Environment ID
+     */
+    private String projectEnvironmentId;
+
+    /**
      * Jenkins credentials that store the Oak9 API Key
      */
     private String credentialsId;
@@ -85,13 +90,15 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
      *
      * @param orgId the oak9-provided org ID
      * @param projectId the oak9-provided project ID
+     * @param projectEnvironmentId the oak9-provided project environment ID
      * @param credentialsId the ID to use to fetch the oak9 API Key from Jenkins secrets
      * @param maxSeverity the severity at which the job will fail (at or above)
      */
     @DataBoundConstructor
-    public Oak9Builder(String orgId, String projectId, String credentialsId, int maxSeverity, String baseUrl, int pollingTimeoutSeconds) {
+    public Oak9Builder(String orgId, String projectId, String projectEnvironmentId, String credentialsId, int maxSeverity, String baseUrl, int pollingTimeoutSeconds) {
         this.orgId = orgId;
         this.projectId = projectId;
+        this.projectEnvironmentId = projectEnvironmentId;
         this.credentialsId = credentialsId;
         this.maxSeverity = maxSeverity;
         this.baseUrl = baseUrl;
@@ -114,6 +121,15 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     @DataBoundSetter
     public void setProjectId(String projectId) {
         this.projectId = projectId;
+    }
+
+    /**
+     * Sets the oak9 project environment ID for the runner
+     * @param projectEnvironmentId the oak9-provided project environment ID
+     */
+    @DataBoundSetter
+    public void setProjectEnvironmentId(String projectEnvironmentId) {
+        this.projectEnvironmentId = projectEnvironmentId;
     }
 
     /**
@@ -180,6 +196,14 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
     }
 
     /**
+     * Fetches the Jenkins Project Environment ID
+     * @return the Jenkins Project Environment ID
+     */
+    public String getProjectEnvironmentId() {
+        return this.projectEnvironmentId;
+    }
+
+    /**
      * Fetches the credentials ID selected for the job
      * @return The credentials ID selected for the job
      */
@@ -219,6 +243,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
                 getCredentials(run, this.getCredentialsId()).getSecret().getPlainText(),
                 this.orgId,
                 this.projectId,
+                this.projectEnvironmentId,
                 this.getPollingTimeoutSeconds(),
                 taskListener,
                 new OkHttpClient.Builder()

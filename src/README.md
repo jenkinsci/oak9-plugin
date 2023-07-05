@@ -23,7 +23,7 @@ point the Jenkins job should fail.
 
 1. Provide your oak9 API key as a Credential. The credential type must be `Secret Text` and your API key must be placed
    in the `Secret` field.
-2. In your Jenkinsfile, add a step for the Oak9Builder: `step([$class: 'Oak9Builder', credentialsId: 'oak9-api-key', orgId: "acme-company", projectId: "acme-company-1", maxSeverity: 2])`
+2. In your Jenkinsfile, add a step for the Oak9Builder: `step([$class: 'Oak9Builder', credentialsId: 'oak9-api-key', orgId: "acme-company", projectId: "proj-acme-company-1", projectEnvironmentId: "acme-company-aBcDeFG1", maxSeverity: 2])`
 3. A simple, but complete, pipeline description might look like:
 ### Declarative Pipeline
 ```
@@ -33,7 +33,7 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                step([$class: 'Oak9Builder', credentialsId: 'oak9-api-key', orgId: "acme-company", projectId: "acme-company-1", maxSeverity: 2])
+                step([$class: 'Oak9Builder', credentialsId: 'oak9-api-key', orgId: "acme-company", projectId: "proj-acme-company-1", projectEnvironmentId: "acme-company-aBcDeFG1", maxSeverity: 2])
             }
         }
     }
@@ -44,7 +44,7 @@ pipeline {
 ```
 node {
     stage('Build') {
-        step([$class: 'Oak9Builder', credentialsId: 'oak9-api-key', orgId: "acme-company", projectId: "acme-company-1", maxSeverity: 2])
+        step([$class: 'Oak9Builder', credentialsId: 'oak9-api-key', orgId: "acme-company", projectId: "proj-acme-company-1", projectEnvironmentId: "acme-company-aBcDeFG1", maxSeverity: 2])
     }
 }
 ```
