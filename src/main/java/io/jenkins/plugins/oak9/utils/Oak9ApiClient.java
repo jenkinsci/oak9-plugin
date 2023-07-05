@@ -117,7 +117,7 @@ public class Oak9ApiClient {
         String credentials = Credentials.basic(this.orgId, this.key);
         String url = (
             this.baseUrl + "/" + this.orgId + "/validations/" + this.projectId + "/queue/iac" +
-            (this.projectEnvironmentId == null || this.projectEnvironmentId == "" ? "" : "/" + this.projectEnvironmentId) +
+            (this.projectEnvironmentId.length() == 0 ? "" : "/" + this.projectEnvironmentId) +
             "?files");
         Request request = new Request.Builder()
                 .header("Authorization", credentials)
