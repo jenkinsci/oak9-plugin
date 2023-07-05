@@ -18,6 +18,7 @@ public class ResultTest {
         actualResult.setErrorMessage("Error Message");
         actualResult.setOrgId("42");
         actualResult.setProjectId("myproject");
+        actualResult.setProjectEnvironmentId("myprojectenvironment");
         actualResult.setRepositoryName("Repository Name");
         actualResult.setRequestId("42");
         ArrayList<Resource> resourceList = new ArrayList<Resource>();
@@ -41,6 +42,7 @@ public class ResultTest {
         assertEquals("Entity Type", actualResult.getEntityType());
         assertEquals("42", actualResult.getOrgId());
         assertEquals("myproject", actualResult.getProjectId());
+        assertEquals("myprojectenvironment", actualResult.getProjectEnvironmentId());
         assertEquals("42", actualResult.getRequestId());
         assertSame(resourceList, resources);
         assertEquals(designGapList, resources);
@@ -63,13 +65,14 @@ public class ResultTest {
 
         ArrayList<Object> objectList = new ArrayList<Object>();
         Result actualResult = new Result("42", "Repository Name", "Time Stamp", resourceList, "Status", "Error Message",
-                "Source", designGapList, resultRef, objectList, "42", "myproject", "1.0.2", "Entity Type");
+                "Source", designGapList, resultRef, objectList, "42", "myproject", "myprojectenvironment", "1.0.2", "Entity Type");
         ArrayList<DesignGap> designGapList1 = new ArrayList<DesignGap>();
         actualResult.setDesignGaps(designGapList1);
         actualResult.setEntityType("Entity Type");
         actualResult.setErrorMessage("Error Message");
         actualResult.setOrgId("42");
         actualResult.setProjectId("myproject");
+        actualResult.setProjectEnvironmentId("myprojectenvironment");
         actualResult.setRepositoryName("Repository Name");
         actualResult.setRequestId("42");
         ArrayList<Resource> resourceList1 = new ArrayList<Resource>();
@@ -96,6 +99,7 @@ public class ResultTest {
         assertEquals("Entity Type", actualResult.getEntityType());
         assertEquals("42", actualResult.getOrgId());
         assertEquals("myproject", actualResult.getProjectId());
+        assertEquals("myprojectenvironment", actualResult.getProjectEnvironmentId());
         assertEquals("42", actualResult.getRequestId());
         assertSame(resourceList1, resources);
         assertEquals(results, resources);

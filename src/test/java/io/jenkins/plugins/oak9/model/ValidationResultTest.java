@@ -18,6 +18,7 @@ public class ValidationResultTest {
         actualValidationResult.setErrorMessage("Error Message");
         actualValidationResult.setOrgId("42");
         actualValidationResult.setProjectId("myproject");
+        actualValidationResult.setProjectEnvironmentId("myprojectenvironment");
         actualValidationResult.setRepositoryName("Repository Name");
         actualValidationResult.setRequestId("42");
         ArrayList<Object> objectList = new ArrayList<Object>();
@@ -41,6 +42,7 @@ public class ValidationResultTest {
         assertEquals("Entity Type", actualValidationResult.getEntityType());
         assertEquals("42", actualValidationResult.getOrgId());
         assertEquals("myproject", actualValidationResult.getProjectId());
+        assertEquals("myprojectenvironment", actualValidationResult.getProjectEnvironmentId());
         assertEquals("42", actualValidationResult.getRequestId());
         assertSame(objectList, resources);
         assertEquals(results, resources);
@@ -63,14 +65,15 @@ public class ValidationResultTest {
 
         ArrayList<Object> objectList1 = new ArrayList<Object>();
         ValidationResult actualValidationResult = new ValidationResult("42", "Repository Name", "Time Stamp", objectList,
-                "Status", "Error Message", "Source", designGapList, resultRef, objectList1, "42", "myproject", "1.0.2",
-                "Entity Type");
+                "Status", "Error Message", "Source", designGapList, resultRef, objectList1, "42", "myproject", 
+                "myprojectenvironment", "1.0.2", "Entity Type");
         ArrayList<DesignGap> designGapList1 = new ArrayList<DesignGap>();
         actualValidationResult.setDesignGaps(designGapList1);
         actualValidationResult.setEntityType("Entity Type");
         actualValidationResult.setErrorMessage("Error Message");
         actualValidationResult.setOrgId("42");
         actualValidationResult.setProjectId("myproject");
+        actualValidationResult.setProjectEnvironmentId("myprojectenvironment");
         actualValidationResult.setRepositoryName("Repository Name");
         actualValidationResult.setRequestId("42");
         ArrayList<Object> objectList2 = new ArrayList<Object>();
@@ -97,6 +100,7 @@ public class ValidationResultTest {
         assertEquals("Entity Type", actualValidationResult.getEntityType());
         assertEquals("42", actualValidationResult.getOrgId());
         assertEquals("myproject", actualValidationResult.getProjectId());
+        assertEquals("myprojectenvironment", actualValidationResult.getProjectEnvironmentId());
         assertEquals("42", actualValidationResult.getRequestId());
         assertSame(objectList2, resources);
         assertEquals(objectList, resources);

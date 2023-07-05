@@ -6,6 +6,9 @@
     <f:entry title="${%ProjectId}" field="projectId">
         <f:textbox />
     </f:entry>
+    <f:entry title="${%ProjectEnvironmentId}" field="projectEnvironmentId">
+        <f:textbox />
+    </f:entry>
     <f:entry field="credentialsId" title="${%Key}">
         <c:select includeUser="true"/>
     </f:entry>
