@@ -24,7 +24,6 @@ import io.jenkins.plugins.oak9.model.Violation;
 import io.jenkins.plugins.oak9.utils.*;
 import jenkins.model.Jenkins;
 import okhttp3.OkHttpClient;
-import org.apache.commons.lang.WordUtils;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -475,7 +474,7 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
 
             ListBoxModel items = new ListBoxModel();
             for (Map.Entry<String,Integer> severity : list) {
-                items.add(WordUtils.capitalize(severity.getKey()), severity.getValue().toString());
+                items.add(capitalizeWords(severity.getKey()), severity.getValue().toString());
             }
             return items;
         }
@@ -519,6 +518,28 @@ public class Oak9Builder extends Builder implements SimpleBuildStep {
             return "https://api.oak9.io/integrations";
         }
 
+    }
+
+    /**
+     * Upper-cases the first letter of each whitespace-delimited word, leaving the rest of each word
+     * as-is -- matching Commons Lang's {@code WordUtils.capitalize} (which, unlike
+     * {@code capitalizeFully}, does not lower-case the remainder).
+     */
+    private static String capitalizeWords(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
+        }
+        char[] chars = str.toCharArray();
+        boolean atWordStart = true;
+        for (int i = 0; i < chars.length; i++) {
+            if (Character.isWhitespace(chars[i])) {
+                atWordStart = true;
+            } else if (atWordStart) {
+                chars[i] = Character.toTitleCase(chars[i]);
+                atWordStart = false;
+            }
+        }
+        return new String(chars);
     }
 
 }
